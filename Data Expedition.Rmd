@@ -61,4 +61,47 @@ qplot(train$Fr, bins = 20,
 
 ```
 
+### General Framework
+
+### Linear Model (log transformations)
+
+### Polynomial 
+
+### GAMs
+
+### Splines
+
+### Random Forest
+
+### Cross Validation
+
+```{r, include=FALSE}
+cross_validate <- function(model_type, formula, data, k, log_response) {
+  #Randomly shuffle the data
+  shuffled_data<-data[sample(nrow(data)),]
+  #Create 10 equally size folds
+  folds <- cut(seq(1,nrow(shuffled_data)),breaks=k,labels=FALSE)
+  #Perform 10 fold cross validation
+  avg_mse <- 0
+  for(i in 1:k){
+    #Segement your data by fold using the which() function 
+    testIndexes <- which(folds==i,arr.ind=TRUE)
+    testData <- shuffled_data[testIndexes, ]
+    trainData <- shuffled_data[-testIndexes, ]
+    
+    model <- model_type(as.formula(formula), data=trainData)
+    # validate model
+    if (log_response) {
+      test_mse <-  mean((exp(predict(model, testData)) - testData$BWTG_C)^2)
+    }
+    else {
+      test_mse <- mean((predict(model, testData) - testData$BWTG_C)^2)
+    }
+    avg_mse <- avg_mse + test_mse
+    }
+  print('Average test MSE')
+  print(avg_mse / k)
+  return (avg_mse / k)
+}
+```
 
