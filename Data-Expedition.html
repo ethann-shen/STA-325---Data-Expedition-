@@ -136,6 +136,28 @@ p3 &lt;-<span class="st"> </span><span class="kw">qplot</span>(train<span class=
 </div>
 <div id="linear-model-log-transformations" class="section level3">
 <h3>Linear Model (log transformations)</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lm.fit.<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw">lm</span>(R_moment_<span class="dv">1</span> <span class="op">~</span><span class="st"> </span>St <span class="op">+</span><span class="st"> </span>Re <span class="op">+</span><span class="st"> </span>Fr, <span class="dt">data =</span> train)
+<span class="kw">summary</span>(lm.fit.<span class="dv">1</span>)</code></pre></div>
+<pre><code>## 
+## Call:
+## lm(formula = R_moment_1 ~ St + Re + Fr, data = train)
+## 
+## Residuals:
+##       Min        1Q    Median        3Q       Max 
+## -0.063596 -0.029880  0.000325  0.033430  0.059556 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  1.172e-01  1.404e-02   8.348 1.13e-12 ***
+## St           1.339e-02  4.642e-03   2.886  0.00495 ** 
+## Re          -3.775e-04  3.246e-05 -11.633  &lt; 2e-16 ***
+## Fr          -1.067e-02  1.657e-02  -0.644  0.52150    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.03418 on 85 degrees of freedom
+## Multiple R-squared:  0.6382, Adjusted R-squared:  0.6254 
+## F-statistic: 49.97 on 3 and 85 DF,  p-value: &lt; 2.2e-16</code></pre>
 <div id="using-ridge-and-lasso-regression" class="section level4">
 <h4>Using Ridge and LASSO regression</h4>
 </div>
