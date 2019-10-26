@@ -4,6 +4,25 @@ author: "Ethan Shen, Austin Jia, Malavi Ravindran, Steven Herrera"
 date: "10/26/2019"
 output: rmdformats::readthedown
 ---
+
+```{r, echo = FALSE, include = FALSE}
+# Installing packages
+pkgTest <- function(x) {
+  if (!require(x,character.only = TRUE)) {
+    install.packages(x,dep=TRUE)
+  }
+}
+pkgs <- c("ggplot2", "cowplot")
+for (pkg in pkgs) {
+  pkgTest(pkg)
+}
+```
+
+```{r, include=FALSE, echo = FALSE}
+library(ggplot2)
+library(cowplot)
+```
+
 ```{r}
 train <- read.csv("data-train.csv")
 test <- read.csv("data-test.csv")
