@@ -37,17 +37,14 @@ p1 <- qplot(train$St, bins = 20,
       main = "Distribution of St", 
       xlab = "St", 
       ylab = "Frequency")
-
 p2 <- qplot(train$Re, bins = 20,
       main = "Distribution of Re", 
       xlab = "Re", 
       ylab = "Frequency")
-
 p3 <- qplot(train$Fr, bins = 20,
       main = "Distribution of Fr", 
       xlab = "Fr", 
       ylab = "Frequency")
-
 plot_grid(p1,p2,p3)
 ```
 
@@ -58,18 +55,12 @@ qplot(train$Fr, bins = 20,
       main = "Distribution of Fr", 
       xlab = "Fr", 
       ylab = "Frequency")
-
 ```
 
-## General Framework
+### General Framework
 
 ### Linear Model (log transformations)
-
-```{r}
-lm.fit.1 <- lm(R_moment_1 ~ St + Re + Fr, data = train)
-summary(lm.fit.1)
-```
-
+#### Using Ridge and LASSO regression 
 
 ### Polynomial 
 
@@ -111,3 +102,8 @@ cross_validate <- function(model_type, formula, data, k, log_response) {
 }
 ```
 
+### MSE Scores LATEX Table
+
+### Flexibility vs. MSE Table
+
+### Final Insights
