@@ -61,9 +61,15 @@ qplot(train$Fr, bins = 20,
 
 ```
 
-### General Framework
+## General Framework
 
 ### Linear Model (log transformations)
+
+```{r}
+lm.fit.1 <- lm(R_moment_1 ~ St + Re + Fr, data = train)
+summary(lm.fit.1)
+```
+
 
 ### Polynomial 
 
