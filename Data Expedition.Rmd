@@ -64,6 +64,7 @@ qplot(train$Fr, bins = 20,
 ### General Framework
 
 ### Linear Model (log transformations)
+#### Using Ridge and LASSO regression 
 
 ### Polynomial 
 
@@ -105,3 +106,8 @@ cross_validate <- function(model_type, formula, data, k, log_response) {
 }
 ```
 
+### MSE Scores LATEX Table
+
+### Flexibility vs. MSE Table
+
+### Final Insights
