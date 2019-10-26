@@ -12,15 +12,16 @@ pkgTest <- function(x) {
     install.packages(x,dep=TRUE)
   }
 }
-pkgs <- c("ggplot2", "cowplot")
+pkgs <- c("ggplot2", "cowplot", "LaplacesDemon")
 for (pkg in pkgs) {
   pkgTest(pkg)
 }
 ```
 
-```{r, include=FALSE, echo = FALSE}
+```{r, include = FALSE, echo = FALSE}
 library(ggplot2)
 library(cowplot)
+library(LaplacesDemon)
 ```
 
 ```{r}
@@ -51,8 +52,7 @@ plot_grid(p1,p2,p3)
 
 
 ```{r}
-train[train$Fr == Inf, 3] <- 2^31 - 1
-train$Fr <- log(train$Fr)
+train$Fr <- invlogit(train$Fr)
 qplot(train$Fr, bins = 20,
       main = "Distribution of Fr", 
       xlab = "Fr", 
