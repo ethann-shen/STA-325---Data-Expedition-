@@ -1,0 +1,6 @@
+---
+title: "STA 325 - Data Expedition"
+author: "Ethan Shen, Austin Jia, Malavi Ravindran, Steven Herrera"
+date: "10/26/2019"
+output: html_document
+---
