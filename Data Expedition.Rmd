@@ -12,7 +12,7 @@ pkgTest <- function(x) {
     install.packages(x,dep=TRUE)
   }
 }
-pkgs <- c("ggplot2", "cowplot", "LaplacesDemon", "gam")
+pkgs <- c("ggplot2", "cowplot", "LaplacesDemon", "gam", "splines", "mgcv", "polywog", "DAAG")
 for (pkg in pkgs) {
   pkgTest(pkg)
 }
@@ -24,6 +24,9 @@ library(cowplot)
 library(LaplacesDemon)
 library(gam)
 library(splines)
+library(mgcv)
+library(polywog)
+library(DAAG)
 ```
 
 ```{r}
@@ -68,38 +71,6 @@ cowplot::plot_grid(p1,p2,p3)
 
 ### Random Forest
 
-### Cross Validation
-
-```{r, include=FALSE}
-cross_validate <- function(model_type, formula, data, k, log_response) {
-  #Randomly shuffle the data
-  shuffled_data<-data[sample(nrow(data)),]
-  #Create 10 equally size folds
-  folds <- cut(seq(1,nrow(shuffled_data)),breaks=k,labels=FALSE)
-  #Perform 10 fold cross validation
-  avg_mse <- 0
-  for(i in 1:k){
-    #Segement your data by fold using the which() function 
-    testIndexes <- which(folds==i,arr.ind=TRUE)
-    testData <- shuffled_data[testIndexes, ]
-    trainData <- shuffled_data[-testIndexes, ]
-    
-    model <- model_type(as.formula(formula), data=trainData)
-    # validate model
-    if (log_response) {
-      test_mse <-  mean((exp(predict(model, testData)) - testData$BWTG_C)^2)
-    }
-    else {
-      test_mse <- mean((predict(model, testData) - testData$BWTG_C)^2)
-    }
-    avg_mse <- avg_mse + test_mse
-    }
-  print('Average test MSE')
-  print(avg_mse / k)
-  return (avg_mse / k)
-}
-```
-
 ### MSE Scores LATEX Table
 
 ### Flexibility vs. MSE Table
@@ -127,36 +98,6 @@ cross_validate <- function(model_type, formula, data, k, log_response) {
 
 ### Cross Validation
 
-```{r, include=FALSE}
-cross_validate <- function(model_type, formula, data, k, log_response) {
-  #Randomly shuffle the data
-  shuffled_data<-data[sample(nrow(data)),]
-  #Create 10 equally size folds
-  folds <- cut(seq(1,nrow(shuffled_data)),breaks=k,labels=FALSE)
-  #Perform 10 fold cross validation
-  avg_mse <- 0
-  for(i in 1:k){
-    #Segement your data by fold using the which() function 
-    testIndexes <- which(folds==i,arr.ind=TRUE)
-    testData <- shuffled_data[testIndexes, ]
-    trainData <- shuffled_data[-testIndexes, ]
-    
-    model <- model_type(as.formula(formula), data=trainData)
-    # validate model
-    if (log_response) {
-      test_mse <-  mean((exp(predict(model, testData)) - testData$BWTG_C)^2)
-    }
-    else {
-      test_mse <- mean((predict(model, testData) - testData$BWTG_C)^2)
-    }
-    avg_mse <- avg_mse + test_mse
-    }
-  print('Average test MSE')
-  print(avg_mse / k)
-  return (avg_mse / k)
-}
-```
-
 ### MSE Scores LATEX Table
 
 ### Flexibility vs. MSE Table
@@ -171,48 +112,81 @@ cross_validate <- function(model_type, formula, data, k, log_response) {
 
 ### Linear Model (log transformations)
 
+```{r}
+lm.fit.3 <- lm(R_moment_3 ~ St + Re + Fr, data = train) 
+summary(lm.fit.3)
+predict(lm.fit.3, list(St = test$St, Re = test$Re, Fr = test$Fr))
+plot(lm.fit.3)
 
-#### Using Ridge and LASSO regression 
+
+cv.lm(train, form.lm = formula(log(R_moment_3) ~ St + Re + Fr), m = 10)
+```
 
 ### Polynomial 
 
+```{r}
+cv1 <- cv.polywog(R_moment_3 ~ St + Re + Fr,
+                  data = train,
+                  degrees.cv = 1:4,
+                  nfolds = 5,
+                  thresh = 1e-4)
+print(cv1)
+
+## Extract best model and bootstrap
+fit1 <- cv1$polywog.fit
+fit1 <- bootPolywog(fit1, nboot = 5)
+summary(fit1)
+```
+
+
 ### GAMs
+
+```{r}
+qplot(R_moment_3, data = train,
+      main = "Distribution of Moment 3", 
+      xlab = "Moment 3", 
+      ylab = "Frequency")
+
+qplot(log(R_moment_3), data = train,
+      main = "Distribution of log(Moment 3)", 
+      xlab = "log(Moment 3)", 
+      ylab = "Frequency")
+
+```
+
+```{r}
+gam.1.3 <- gam(log(R_moment_3) ~ s(St) + Re + Fr, data = train)
+summary(gam.1.3)
+gam.2.3 <- gam(log(R_moment_3) ~ s(log(St)) + Re + Fr, data = train)
+summary(gam.2.3) 
+```
+
+Logging `St` definitely helps
+
+```{r}
+#GOOD MODEL 
+gam.3.3 <- gam(log(R_moment_3) ~ s(log(St)) + Re + Fr + Re * Fr, data = train)
+summary(gam.3.3)
+anova(gam.2.3, gam.3.3, test = "F")
+plot(gam.3.3, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
+```
+
 
 ### Splines
 
-### Random Forest
+```{r}
+spline.1 <- lm(R_moment_3 ~ ns(St, df = 2) + ns(Re, df = 4) + ns(Fr, df=2), data = train) #.3942
+spline.2 <- lm(R_moment_3 ~ ns(log(St), df = 4) + Re + ns(Fr, df=2), data = train) #.3366
+spline.3 <- lm(log(R_moment_3) ~ ns(log(St) + Re, df = 4) + ns(Fr, df=2), data = train) #.4697, AIC 4410.8
+spline.4 <- lm(R_moment_3 ~ bs(St + Re, df = 5) + bs(Fr, degree = 3), data = train) #.4607
 
-### Cross Validation
-
-```{r, include=FALSE}
-cross_validate <- function(model_type, formula, data, k, log_response) {
-  #Randomly shuffle the data
-  shuffled_data<-data[sample(nrow(data)),]
-  #Create 10 equally size folds
-  folds <- cut(seq(1,nrow(shuffled_data)),breaks=k,labels=FALSE)
-  #Perform 10 fold cross validation
-  avg_mse <- 0
-  for(i in 1:k){
-    #Segement your data by fold using the which() function 
-    testIndexes <- which(folds==i,arr.ind=TRUE)
-    testData <- shuffled_data[testIndexes, ]
-    trainData <- shuffled_data[-testIndexes, ]
-    
-    model <- model_type(as.formula(formula), data=trainData)
-    # validate model
-    if (log_response) {
-      test_mse <-  mean((exp(predict(model, testData)) - testData$BWTG_C)^2)
-    }
-    else {
-      test_mse <- mean((predict(model, testData) - testData$BWTG_C)^2)
-    }
-    avg_mse <- avg_mse + test_mse
-    }
-  print('Average test MSE')
-  print(avg_mse / k)
-  return (avg_mse / k)
-}
+summary(spline.1)
+summary(spline.2)
+summary(spline.3)
+summary(spline.4)
 ```
+
+### Random Forest
 
 ### MSE Scores LATEX Table
 
@@ -295,38 +269,6 @@ summary(spline.4)
 
 
 ### Random Forest
-
-### Cross Validation
-
-```{r, include=FALSE}
-cross_validate <- function(model_type, formula, data, k, log_response) {
-  #Randomly shuffle the data
-  shuffled_data<-data[sample(nrow(data)),]
-  #Create 10 equally size folds
-  folds <- cut(seq(1,nrow(shuffled_data)),breaks=k,labels=FALSE)
-  #Perform 10 fold cross validation
-  avg_mse <- 0
-  for(i in 1:k){
-    #Segement your data by fold using the which() function 
-    testIndexes <- which(folds==i,arr.ind=TRUE)
-    testData <- shuffled_data[testIndexes, ]
-    trainData <- shuffled_data[-testIndexes, ]
-    
-    model <- model_type(as.formula(formula), data=trainData)
-    # validate model
-    if (log_response) {
-      test_mse <-  mean((exp(predict(model, testData)) - testData$BWTG_C)^2)
-    }
-    else {
-      test_mse <- mean((predict(model, testData) - testData$BWTG_C)^2)
-    }
-    avg_mse <- avg_mse + test_mse
-    }
-  print('Average test MSE')
-  print(avg_mse / k)
-  return (avg_mse / k)
-}
-```
 
 ### MSE Scores LATEX Table
 
