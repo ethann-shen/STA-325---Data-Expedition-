@@ -212,6 +212,7 @@ cross_validate <- function(model_type, formula, data, k, log_response) {
   print(avg_mse / k)
   return (avg_mse / k)
 }
+
 ```
 
 ### MSE Scores LATEX Table
@@ -230,9 +231,10 @@ cross_validate <- function(model_type, formula, data, k, log_response) {
 ### Linear Model (log transformations)
 
 ```{r}
-lm.fit.4 <- lm(R_moment_4 ~ St + Re + Fr, data = train) 
+lm.fit.4 <- lm(log(R_moment_4) ~ St + Re + Fr, data = train) 
 summary(lm.fit.4)
-predict(lm.fit.4, list(St = test$St, Re = test$Re, Fr = test$Fr))
+library(DAAG)
+cv.lm(train, form.lm = formula(log(R_moment_4) ~ St + Re + Fr), m = 5)
 ```
 
 #### Using Ridge and LASSO regression 
@@ -240,8 +242,16 @@ predict(lm.fit.4, list(St = test$St, Re = test$Re, Fr = test$Fr))
 ### Polynomial 
 
 ```{r}
-poly.fit.4 <- lm(R_moment_4 ~ poly(St,4) + poly(Re,2) + poly(Fr, 2), data = train) 
+unique(train$St)
+poly.fit.4 <- lm(R_moment_4 ~ poly(St,2) + poly(Re,2) + poly(Fr, 2), data = train) 
 summary(poly.fit.4)
+library(polywog)
+
+cv.polywog(R_moment_3 ~ St + Re + Fr,
+           data = train,
+           degrees.cv = 1:4,
+           nfolds = 5,
+           thresh = 1e-4)
 ```
 
 ### GAMs
@@ -273,24 +283,32 @@ Logging `St` definitely helps
 library(mgcv)
 gam.3 <- gam(log(R_moment_4) ~ s(log(St)) + Re + Fr + Re * Fr, data = train)
 summary(gam.3)
-anova(gam.2, gam.3, test = "F")
+AIC(gam.3)
+anova(gam.1, gam.2, gam.3, test = "F")
 plot(gam.3, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
 ```
+```{r}
+gam.check(gam.3)
+```
 
- 
+```{r}
+library(gamclass)
+gamclass::CVgam(log(R_moment_4) ~ s(log(St)) + Re + Fr + Re * Fr, data = train, nfold = 5, method = "GCV.Cp")
+```
+
+
 
 ### Splines
 
 ```{r}
-spline.1 <- lm(R_moment_4 ~ ns(St, df = 2) + ns(Re, df = 4) + ns(Fr, df=2), data = train) #.3942
-spline.2 <- lm(R_moment_4 ~ ns(log(St), df = 4) + Re + ns(Fr, df=2), data = train) #.3366
 spline.3 <- lm(log(R_moment_4) ~ ns(log(St) + Re, df = 4) + ns(Fr, df=2), data = train) #.4697, AIC 4410.8
-spline.4 <- lm(R_moment_4 ~ bs(St + Re, df = 5) + bs(Fr, degree = 3), data = train) #.4607
+spline.4 <- lm(log(R_moment_4) ~ ns(St + Re) + bs(Fr), data = train) #.4607
 
-summary(spline.1)
-summary(spline.2)
 summary(spline.3)
+AIC(spline.3)
 summary(spline.4)
+AIC(spline.4)
+anova(spline.3, spline.4, test = "F")
 ```
 
 
@@ -298,35 +316,7 @@ summary(spline.4)
 
 ### Cross Validation
 
-```{r, include=FALSE}
-cross_validate <- function(model_type, formula, data, k, log_response) {
-  #Randomly shuffle the data
-  shuffled_data<-data[sample(nrow(data)),]
-  #Create 10 equally size folds
-  folds <- cut(seq(1,nrow(shuffled_data)),breaks=k,labels=FALSE)
-  #Perform 10 fold cross validation
-  avg_mse <- 0
-  for(i in 1:k){
-    #Segement your data by fold using the which() function 
-    testIndexes <- which(folds==i,arr.ind=TRUE)
-    testData <- shuffled_data[testIndexes, ]
-    trainData <- shuffled_data[-testIndexes, ]
-    
-    model <- model_type(as.formula(formula), data=trainData)
-    # validate model
-    if (log_response) {
-      test_mse <-  mean((exp(predict(model, testData)) - testData$BWTG_C)^2)
-    }
-    else {
-      test_mse <- mean((predict(model, testData) - testData$BWTG_C)^2)
-    }
-    avg_mse <- avg_mse + test_mse
-    }
-  print('Average test MSE')
-  print(avg_mse / k)
-  return (avg_mse / k)
-}
-```
+
 
 ### MSE Scores LATEX Table
 
