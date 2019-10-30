@@ -12,7 +12,7 @@ pkgTest <- function(x) {
     install.packages(x,dep=TRUE)
   }
 }
-pkgs <- c("ggplot2", "cowplot", "LaplacesDemon", "gam", "splines", "mgcv", "polywog", "DAAG")
+pkgs <- c("ggplot2", "cowplot", "LaplacesDemon", "gam", "splines", "mgcv", "polywog", "DAAG", "gbm", "adabag")
 for (pkg in pkgs) {
   pkgTest(pkg)
 }
@@ -27,6 +27,8 @@ library(splines)
 library(mgcv)
 library(polywog)
 library(DAAG)
+library(gbm)
+library(adabag)
 ```
 
 ```{r}
@@ -205,16 +207,36 @@ plot(gam.3.3, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
 ### Splines
 
 ```{r}
-spline.1 <- lm(R_moment_3 ~ ns(St, df = 2) + ns(Re, df = 4) + ns(Fr, df=2), data = train) #.3942
-spline.2 <- lm(R_moment_3 ~ ns(log(St), df = 4) + Re + ns(Fr, df=2), data = train) #.3366
-spline.3 <- lm(log(R_moment_3) ~ ns(log(St) + Re, df = 4) + ns(Fr, df=2), data = train) #.4697, AIC 4410.8
-spline.4 <- lm(R_moment_3 ~ bs(St + Re, df = 5) + bs(Fr, degree = 3), data = train) #.4607
+spline.1.3 <- lm(R_moment_3 ~ ns(St, df = 2) + ns(Re, df = 4) + ns(Fr, df=2), data = train) #.3942
+spline.2.3 <- lm(R_moment_3 ~ ns(log(St), df = 4) + Re + ns(Fr, df=2), data = train) #.3366
+spline.3.3 <- lm(log(R_moment_3) ~ ns(log(St) + Re, df = 4) + ns(Fr, df=2), data = train) #.4697, AIC 4410.8
+spline.4.3 <- lm(log(R_moment_3) ~ ns(St + Re) + bs(Fr), data = train) #.4607
 
-summary(spline.1)
-summary(spline.2)
-summary(spline.3)
-summary(spline.4)
+summary(spline.1.3)
+summary(spline.2.3)
+summary(spline.3.3)
+summary(spline.4.3)
+
+summary(spline.3.3)
+AIC(spline.3.3)
+summary(spline.4.3)
+AIC(spline.4.3)
+anova(spline.3.3, spline.4.3, test = "F")
 ```
+
+###Boosting
+
+```{r}
+set.seed(1)
+blehbleh <- gbm(R_moment_3 ~ St + Fr + Re, data = train, 
+distribution = "gaussian", n.trees = 5000)
+
+summary(blehbleh)
+
+boosting.cv(formula, data, v = 10, boos = TRUE, mfinal = 100, 
+ coeflearn = "Breiman", control, par=FALSE)
+```
+
 
 ### Random Forest
 
