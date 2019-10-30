@@ -23,6 +23,7 @@ library(ggplot2)
 library(cowplot)
 library(LaplacesDemon)
 library(gam)
+library(splines)
 ```
 
 ```{r}
@@ -33,6 +34,8 @@ test <- read.csv("data-test.csv")
 # Exploratory Data Analysis
 
 ```{r}
+train$Fr <- invlogit(train$Fr)
+
 p1 <- qplot(train$St, bins = 20, 
       main = "Distribution of St", 
       xlab = "St", 
@@ -45,16 +48,7 @@ p3 <- qplot(train$Fr, bins = 20,
       main = "Distribution of Fr", 
       xlab = "Fr", 
       ylab = "Frequency")
-plot_grid(p1,p2,p3)
-```
-
-
-```{r}
-train$Fr <- invlogit(train$Fr)
-qplot(train$Fr, bins = 20,
-      main = "Distribution of Fr", 
-      xlab = "Fr", 
-      ylab = "Frequency")
+cowplot::plot_grid(p1,p2,p3)
 ```
 
 # Moment 1 - Steven
@@ -235,14 +229,70 @@ cross_validate <- function(model_type, formula, data, k, log_response) {
 
 ### Linear Model (log transformations)
 
+```{r}
+lm.fit.4 <- lm(R_moment_4 ~ St + Re + Fr, data = train) 
+summary(lm.fit.4)
+predict(lm.fit.4, list(St = test$St, Re = test$Re, Fr = test$Fr))
+```
 
 #### Using Ridge and LASSO regression 
 
 ### Polynomial 
 
+```{r}
+poly.fit.4 <- lm(R_moment_4 ~ poly(St,4) + poly(Re,2) + poly(Fr, 2), data = train) 
+summary(poly.fit.4)
+```
+
 ### GAMs
 
+```{r}
+qplot(R_moment_4, data = train,
+      main = "Distribution of Moment 4", 
+      xlab = "Moment 4", 
+      ylab = "Frequency")
+
+qplot(log(R_moment_4), data = train,
+      main = "Distribution of log(Moment 4)", 
+      xlab = "log(Moment 4)", 
+      ylab = "Frequency")
+
+```
+
+```{r}
+gam.1 <- gam(log(R_moment_4) ~ s(St) + Re + Fr, data = train)
+summary(gam.1)
+gam.2 <- gam(log(R_moment_4) ~ s(log(St)) + Re + Fr, data = train)
+summary(gam.2) 
+```
+
+Logging `St` definitely helps
+
+```{r}
+#GOOD MODEL 
+library(mgcv)
+gam.3 <- gam(log(R_moment_4) ~ s(log(St)) + Re + Fr + Re * Fr, data = train)
+summary(gam.3)
+anova(gam.2, gam.3, test = "F")
+plot(gam.3, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
+```
+
+ 
+
 ### Splines
+
+```{r}
+spline.1 <- lm(R_moment_4 ~ ns(St, df = 2) + ns(Re, df = 4) + ns(Fr, df=2), data = train) #.3942
+spline.2 <- lm(R_moment_4 ~ ns(log(St), df = 4) + Re + ns(Fr, df=2), data = train) #.3366
+spline.3 <- lm(log(R_moment_4) ~ ns(log(St) + Re, df = 4) + ns(Fr, df=2), data = train) #.4697, AIC 4410.8
+spline.4 <- lm(R_moment_4 ~ bs(St + Re, df = 5) + bs(Fr, degree = 3), data = train) #.4607
+
+summary(spline.1)
+summary(spline.2)
+summary(spline.3)
+summary(spline.4)
+```
+
 
 ### Random Forest
 
