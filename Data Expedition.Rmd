@@ -284,7 +284,7 @@ p <- ggplot(data=train.3, aes(x=Re,y=log_third_moment, color=Fr)) + geom_smooth(
 p
 ```
 
-Initial data exploration in the introduction showcased a long right tail, suggesting that a long transformation on the response to be appropriate. The above plot which shows co-movement between Re and Fr suggests that an interaction between the two variables could be appropriate. Let's improve our baseline linear model with these enhancements.
+Initial data exploration in the introduction showcased a long right tail, suggesting that a long transformation on the response to be appropriate. This is a transformation that is inherent in the data, and will be carrying through all the models. The above plot which shows co-movement between Re and Fr suggests that an interaction between the two variables could be appropriate. Let's improve our baseline linear model with these enhancements.
 
 ```{r}
 train.3.1 <- train.3 %>%
@@ -312,7 +312,7 @@ fit1 <- bootPolywog(fit1, nboot = 5)
 summary(fit1)
 ```
 
-Here, we explore a polynomial fit. Through bootstrapping, the polywog package selected degree 2. This is an improvement on the baseline linear model, but not on the 
+Here, we explore a polynomial fit. Through bootstrapping, the polywog package selected degree 3. This is a further improvement on the log-linear model we fit previously, with CV MSE at 1.68. Next, we explore GAMs. 
 
 ### GAMs
 
@@ -329,53 +329,28 @@ qplot(log(R_moment_3), data = train,
 
 ```
 
-```{r, include=FALSE}
-cross_validate <- function(model_type, formula, data, k, log_response) {
-  #Randomly shuffle the data
-  shuffled_data<-data[sample(nrow(data)),]
-  #Create 10 equally size folds
-  folds <- cut(seq(1,nrow(shuffled_data)),breaks=k,labels=FALSE)
-  #Perform 10 fold cross validation
-  avg_mse <- 0
-  for(i in 1:k){
-    #Segement your data by fold using the which() function 
-    testIndexes <- which(folds==i,arr.ind=TRUE)
-    testData <- shuffled_data[testIndexes, ]
-    trainData <- shuffled_data[-testIndexes, ]
-    
-    model <- model_type(as.formula(formula), data=trainData)
-    # validate model
-    if (log_response) {
-      test_mse <-  mean((exp(predict(model, testData)) - testData$BWTG_C)^2)
-    }
-    else {
-      test_mse <- mean((predict(model, testData) - testData$BWTG_C)^2)
-    }
-    avg_mse <- avg_mse + test_mse
-  }
-  print('Average test MSE')
-  print(avg_mse / k)
-  return (avg_mse / k)
-}
-```
+Base GAM model 
 
 ```{r}
-gam.1.3 <- gam(log(R_moment_3) ~ s(St) + Re + Fr, data = train)
-summary(gam.1.3)
-gam.2.3 <- gam(log(R_moment_3) ~ s(log(St)) + Re + Fr, data = train)
-summary(gam.2.3) 
+gam.fit.3.1 <- gam(log_third_moment~ s(St) + Re + Fr, data=train.3.1)
+summary(gam.fit.3.1)
 ```
 
-Logging `St` definitely helps
+GAM model with interactions
 
 ```{r}
-#GOOD MODEL 
-gam.3.3 <- gam(log(R_moment_3) ~ s(log(St)) + Re + Fr + Re * Fr, data = train)
-summary(gam.3.3)
-anova(gam.2.3, gam.3.3, test = "F")
-plot(gam.3.3, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
+gam.fit.3.2 <- gam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data=train.3.1)
+summary(gam.fit.3.2)
 ```
 
+
+```{r}
+library(mgcv)
+anova(gam.fit.3.1, gam.fit.3.2, test = "F")
+gamclass::CVgam(log_third_moment ~ s(log(St)) + Re + Fr + Re * Fr, data = train.3.1, nfold = 5, method = "GCV.Cp")
+```
+
+The anova is significant at an alpha level of 0.001, so we prefer the GAM model with interactions. The CV generated MSE scores also shows that it outforms the simple linear model. It underperforms the polynomial fit by a small margin, which seems to be a price worth paying if our main objective is interpretability. 
 
 ### Splines
 
