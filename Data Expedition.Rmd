@@ -31,7 +31,7 @@ library(DAAG)
 
 ```{r}
 train <- read.csv("data-train.csv")
-test <- read.csv("data-test.csv")
+# test <- read.csv("data-test.csv")
 ```
 
 # Exploratory Data Analysis
@@ -234,7 +234,17 @@ summary(spline.4)
 ### Linear Model (log transformations)
 
 ```{r}
-lm.fit.4 <- lm(log(R_moment_4) ~ St + Re + Fr, data = train) 
+set.seed(123)
+data <- read.csv("data-train.csv")
+data$Fr <- invlogit(data$Fr)
+
+split <- sample(1:nrow(data), nrow(data) * 0.8) # 50% split
+train.data <- data[split, ]
+test.data <- data[-split,]
+```
+
+```{r}
+lm.fit.4 <- lm(log(R_moment_4) ~ St + Re + Fr, data = train.data) 
 summary(lm.fit.4)
 library(DAAG)
 cv.lm(train, form.lm = formula(log(R_moment_4) ~ St + Re + Fr), m = 5)
@@ -304,7 +314,7 @@ gamclass::CVgam(log(R_moment_4) ~ s(log(St)) + Re + Fr + Re * Fr, data = train, 
 ### Splines
 
 ```{r}
-spline.3 <- lm(log(R_moment_4) ~ ns(log(St) + Re, df = 4) + ns(Fr, df=2), data = train) #.4697, AIC 4410.8
+spline.3 <- lm(log(R_moment_4) ~ ns(St + Re) + ns(Fr), data = train) #.4697, AIC 4410.8
 spline.4 <- lm(log(R_moment_4) ~ ns(St + Re) + bs(Fr), data = train) #.4607
 
 summary(spline.3)
@@ -312,10 +322,31 @@ AIC(spline.3)
 summary(spline.4)
 AIC(spline.4)
 anova(spline.3, spline.4, test = "F")
+
+smooth.spline(train$R_moment_4, train$St, train$Re, train$Fr, cv = TRUE)
+
 ```
 
 
 ### Random Forest
+
+```{r}
+library(gbm)
+set.seed(1)
+bleh <- gbm(R_moment_4 ~ St + Fr + Re, data = train, 
+                    distribution = "gaussian", n.trees = 5000)
+
+summary(bleh)
+library(adabag)
+library(gbm)
+boosting.cv(R_moment_4 ~ St + Fr + Re, train, v = 10, boos = TRUE, mfinal = 100, 
+ coeflearn = "Breiman", control, par=FALSE)
+
+gbmCrossVal(cv.folds=10, train,  x, y,
+  offset, distribution, w, var.monotone, n.trees, interaction.depth,
+  n.minobsinnode, shrinkage, bag.fraction, var.names, response.name, group)
+```
+
 
 ### Cross Validation
 
