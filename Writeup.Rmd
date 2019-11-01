@@ -50,7 +50,7 @@ As mentioned in our introduction, in our attempt to model the probability distri
 
 Next, we visualized the distribution of the four moments as histograms to see if any transformations on our response variables were necessary.
 
-```{r warning = FALSE, message = FALSE, echo = FALSE}
+```{r fig.height = 3, fig.width = 6, warning = FALSE, message = FALSE, echo = FALSE}
 m1 <- qplot(R_moment_1, data = train,
             main = "Distribution of Moment 1", 
             xlab = "Moment 1", 
@@ -93,13 +93,13 @@ cowplot::plot_grid(m1,m2,m3,m4)
 
 From this, we noticed a severe right skew in the distributions of all four moments. To combat this, we decided to do a log transformation of each of the moments and use these logged moments as  our response variables in each of the models that we built. We can see that it results in more “normal” looking distributions.
 
-```{r warning = FALSE, message = FALSE, echo = FALSE}
+```{r fig.height = 3, fig.width = 6, warning = FALSE, message = FALSE, echo = FALSE}
 cowplot::plot_grid(mlog1, mlog2, mlog3, mlog4)
 ```
 
 Next, we wanted to explore potential interactions that would be influential within our models. Below we visualize the interaction between `Re` and `Fr` as it pertains to each moment.
 
-```{r warning = FALSE, message = FALSE, echo = FALSE}
+```{r fig.height = 3, fig.width = 6, warning = FALSE, message = FALSE, echo = FALSE}
 i1 <- ggplot(data=train, aes(x=Re,y=log_first_moment, color=as.factor(round(Fr, 3)))) + 
   geom_smooth() + 
   labs(y = "log(Moment 1)",
@@ -151,8 +151,8 @@ From here, we made comparisons in both AIC and cross validation error between di
 ## Moment 1
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-df.m1 <- data.frame(CV.Error.Moment1 = c(0.368, 0.426, 0.407), AIC.Moment1 = c(167, 170, 168))
-row.names(df.m1) <- c("Log Linear", "Spline 1", "Spline 2")
+df.m1 <- data.frame(CV.Error.Moment1 = c(0.368, 0.411, 0.397), AIC.Moment1 = c(167, 171, 169))
+row.names(df.m1) <- c("Log Linear", "GAM (without interactions)", "GAM (with interaction)")
 df.m1
 ```
 
@@ -170,12 +170,12 @@ upper.1 <- fit.1 + (1.96 * se.fit.1)
 ## Moment 2
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-df.m2 <- data.frame(CV.Error.Moment2 = c(4.71, 6.00, 4.07), AIC.Moment2 = c(395, 415, 380))
-row.names(df.m2) <- c("Log Linear", "Spline 1", "Spline 2")
+df.m2 <- data.frame(CV.Error.Moment2 = c(4.71, 3.53, 5.75, 5.09), AIC.Moment2 = c(395, NA, 406, 390))
+row.names(df.m2) <- c("Log Linear", "Polynomial (degree 2)", "GAM (without interactions)", "GAM (with interaction)")
 df.m2
 ```
 
-We are using the GAM with interactions as our final model for moment 2. Even though the error is slightly lower for the second spline, a GAM is more interpretable than a spline. 
+We are using the GAM with interactions as our final model for moment 2. Even though the error is slightly lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. 
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.2 <- gam(log_second_moment~ s(St) + Re + Fr + Re:Fr, data=train)
@@ -193,10 +193,13 @@ upper.2 <- fit.2 + (1.96 * se.fit.2)
 ## Moment 3
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-df.m3 <- data.frame(CV.Error.Moment3 = c(15.7, 18.0, 11.0), AIC.Moment3 = c(498,  516, 474))
-row.names(df.m3) <- c("Log Linear", "Spline 1", "Spline 2")
+df.m3 <- data.frame(CV.Error.Moment3 = c(15.7, 12.1, 16.3, 13.3), AIC.Moment3 = c(498, NA, 512, 497))
+row.names(df.m3) <- c("Log Linear", "Polynomial (degree 2)","GAM (without interactions)", "GAM (with interaction)")
 df.m3
 ```
+
+We are using the GAM with interactions as our final model for moment 3. Even though the error is slightly lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. 
+
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.3 <- gam(log_third_moment~ s(log(St)) + Re + Fr + Re:Fr, data=train)
@@ -215,10 +218,12 @@ upper.3 <- fit.3 + (1.96 * se.fit.3)
 ## Moment 4
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-df.m4 <- data.frame(CV.Error.Moment4 = c(30.6, 37.8, 32.1), AIC.Moment4 = c(562, 578, 562))
-row.names(df.m4) <- c("Log Linear",  "Spline 1", "Spline 2")
+df.m4 <- data.frame(CV.Error.Moment4 = c(30.6,23.1, 38.8, 32.1), AIC.Moment4 = c(562, NA, 578, 562))
+row.names(df.m4) <- c("Log Linear", "Polynomial (degree 2)","GAM (without interactions)", "GAM (with interaction)")
 df.m4
 ```
+
+We are using the GAM with interactions as our final model for moment 4. Even though the error is slightly lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. 
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.4 <- gam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train)
