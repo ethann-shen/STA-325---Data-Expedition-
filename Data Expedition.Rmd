@@ -215,12 +215,16 @@ Next, we will try fititng a couple of different GAM models.
 ```{r}
 gam.fit.2a <- gam(log_second_moment~ s(St) + Re + Fr, data=train)
 summary(gam.fit.2a)
+CVgam(log_second_moment~ s(St) + Re + Fr, data = train, nfold = 5, method = "GCV.Cp")
+
 ```
 
 
 ```{r}
 gam.fit.2b <- gam(log_second_moment~ s(St) + Re + Fr + Re:Fr, data=train)
 summary(gam.fit.2b)
+CVgam(log_second_moment~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
+
 ```
 
 
@@ -230,13 +234,11 @@ anova(gam.fit.2a, gam.fit.2b, test = "F")
 
 Thus, we will consider a GAM model with interactions. Now we wil test this against a natural spline. 
 
-
 ```{r}
 gam.fit.2c <- gam(log_second_moment~ ns(St) + Re + Fr + Re:Fr, data=train)
 summary(gam.fit.2c)
+CVgam(log_second_moment ~ ns(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
 ```
-
-
 
 
 ```{r}
@@ -244,18 +246,16 @@ anova(gam.fit.2c, gam.fit.2b, test = "F")
 ```
 
 We will work with the regular, rather than natural spline for St. 
-Finding the cv error of this model: 
 
-```{r}
-library(gamclass)
-gamclass::CVgam(log_second_moment ~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
-```
 
 We will also try fitting splines.
 
 ```{r}
 spline.fit.2a <- lm(log_second_moment ~ ns(log(St) + Re) + ns(Fr), data = train) 
+CVgam(log_second_moment ~ ns(log(St) + Re) + ns(Fr), data = train, nfold = 5, method = "GCV.Cp")
+
 spline.fit.2b <- lm(log_second_moment ~ ns(St + Re) + bs(Fr), data = train) 
+CVgam(log_second_moment ~ ns(St + Re) + bs(Fr), data = train, nfold = 5, method = "GCV.Cp")
 ```
 
 ```{r}
@@ -321,17 +321,17 @@ As we can see from the MSE generated from 5-fold cross validaiton, this is a mas
 ### Polynomial 
 
 ```{r}
-cv1 <- cv.polywog(log_third_moment ~ St + Re + Fr,
+cv3 <- cv.polywog(log_third_moment ~ St + Re + Fr,
                   data = train,
                   degrees.cv = 1:4,
                   nfolds = 5,
                   thresh = 1e-4)
-print(cv1)
+print(cv3)
 
 ## Extract best model and bootstrap
-fit1 <- cv1$polywog.fit
-fit1 <- bootPolywog(fit1, nboot = 5)
-summary(fit1)
+fit3 <- cv3$polywog.fit
+fit3 <- bootPolywog(fit3, nboot = 5)
+summary(fit3)
 ```
 
 Here, we explore a polynomial fit. Through bootstrapping, the polywog package selected degree 3. This is a further improvement on the log-linear model we fit previously, with CV MSE at 1.68. Next, we explore GAMs. 
@@ -344,6 +344,8 @@ Base GAM model
 ```{r}
 gam.fit.3.1 <- gam(log_third_moment~ s(St) + Re + Fr, data=train)
 summary(gam.fit.3.1)
+CVgam(log_third_moment~ s(St) + Re + Fr, data = train, nfold = 5, method = "GCV.Cp")
+
 ```
 
 GAM model with interactions
@@ -351,13 +353,12 @@ GAM model with interactions
 ```{r}
 gam.fit.3.2 <- gam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data=train)
 summary(gam.fit.3.2)
+CVgam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
 ```
 
 
 ```{r}
-library(mgcv)
 anova(gam.fit.3.1, gam.fit.3.2, test = "F")
-gamclass::CVgam(log_third_moment ~ s(log(St)) + Re + Fr + Re * Fr, data = train, nfold = 5, method = "GCV.Cp")
 ```
 
 The anova is significant at an alpha level of 0.001, so we prefer the GAM model with interactions. The CV generated MSE scores also shows that it outforms the simple linear model. It underperforms the polynomial fit by a small margin, which seems to be a price worth paying if our main objective is interpretability. 
