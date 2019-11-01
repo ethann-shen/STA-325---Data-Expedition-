@@ -53,7 +53,7 @@ As mentioned in our introduction, in our attempt to model the probability distri
 
 Next, we visualized the distribution of the four moments. From this, we noticed a severe right skew in the distributions of all four moments. To combat this, we decided to do a log transformation of each of the moments. We can see that it results in more “normal” looking distributions.
 
-```{r fig.height = 3, warning = FALSE, message = FALSE, echo = FALSE}
+```{r fig.height = 3, fig.width = 6, warning = FALSE, message = FALSE, echo = FALSE}
 m1 <- qplot(R_moment_1, data = train,
             xlab = "Moment 1", 
 )
