@@ -1,8 +1,10 @@
 ---
 title: "STA 325 - Writeup"
 author: "Ethan Shen, Austin Jia, Malavi Ravindran, Steven Herrera"
-date: "10/26/2019"
-output: pdf_document
+date: "11/1/2019"
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
