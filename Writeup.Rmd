@@ -56,32 +56,32 @@ Next, we visualized the distribution of the four moments. From this, we noticed 
 ```{r fig.height = 3, warning = FALSE, message = FALSE, echo = FALSE}
 m1 <- qplot(R_moment_1, data = train,
             xlab = "Moment 1", 
-            )
+)
 
 mlog1 <- qplot(log_first_moment, data = train,
                xlab = "log(Moment 1)"
-               )
+)
 m2 <- qplot(R_moment_2, data = train,
             xlab = "Moment 2"
-            )
+)
 
 mlog2 <- qplot(log_second_moment, data = train,
                xlab = "log(Moment 2)"
-               )
+)
 m3 <- qplot(R_moment_3, data = train,
             xlab = "Moment 3"
-            )
+)
 
 mlog3 <- qplot(log_third_moment, data = train,
                xlab = "log(Moment 3)"
-               )
+)
 m4 <- qplot(R_moment_4, data = train,
             xlab = "Moment 4"
-            )
+)
 
 mlog4 <- qplot(log_fourth_moment, data = train,
                xlab = "log(Moment 4)"
-               )
+)
 
 y.grob <- textGrob("Frequency",
                    rot=90)
@@ -154,6 +154,8 @@ From here, we made comparisons in both AIC and cross validation error between di
 
 # Results 
 
+We displayed the final model output for each moment in the appendix (see section A).
+
 ## Moment 1
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
@@ -162,7 +164,7 @@ row.names(df.m1) <- c("Log Linear with Log Predictors", "GAM (without interactio
 df.m1
 ```
 
-We are using the linear model with a logged response and logged `Re` and `Fr` predictors as our final model for moment 1. It has the lowest CV error and AIC. We initially did not log transform the predictors, but the residual plots for the untransformed predictors egregiously violate the assumptions; the residual plots for the transformed predictors are slightly better (see appendix A). 
+We are using the linear model with a logged response and logged `Re` and `Fr` predictors as our final model for moment 1. It has the lowest CV error and AIC. We initially did not log transform the predictors, but the residual plots for the untransformed predictors egregiously violate the assumptions; the residual plots for the transformed predictors are slightly better (see appendix B.1). 
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.1 <- lm(log_first_moment ~ St + log(Re) + log(Fr), data = train)
@@ -183,8 +185,8 @@ row.names(df.m2) <- c("Log Linear", "Polynomial (degree 2)", "GAM (without inter
 df.m2
 ```
 
-We are using the linear model as our final model for moment 2. Although it does not have the lowest error values, it is more interpretable than a GAM. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B).
- 
+We are using the linear model as our final model for moment 2. Although it does not have the lowest error values, it is more interpretable than a GAM. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B.2).
+
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.2 <- lm(log_second_moment ~ St + Re + Fr + Re*Fr, data=train)
 
@@ -206,7 +208,7 @@ row.names(df.m3) <- c("Log Linear", "Polynomial (degree 2)","GAM (without intera
 df.m3
 ```
 
-We are using the GAM with interactions as our final model for moment 3. Even though the error is slightly lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix C).
+We are using the GAM with interactions as our final model for moment 3. Even though the error is slightly lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B.3).
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.3 <- gam(log_third_moment~ s(log(St)) + Re + Fr + Re:Fr, data=train)
@@ -230,7 +232,7 @@ row.names(df.m4) <- c("Log Linear", "Polynomial (degree 2)","GAM (without intera
 df.m4
 ```
 
-We are using the GAM with interactions as our final model for moment 4. Even though the error is lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix D).
+We are using the GAM with interactions as our final model for moment 4. Even though the error is lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B.4).
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.4 <- gam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train)
@@ -266,7 +268,6 @@ pred <- data.frame(fit.1 = fit.1,
                    upper.3 = upper.3,
                    upper.4 = upper.4)
 
-
 test <- cbind(test, pred)
 head(test)
 write_csv(test, "predictions.csv")
@@ -288,9 +289,10 @@ box2 <- ggplot(predictions_standard_errors, aes(x=se.fit.2)) + geom_histogram() 
 box3 <- ggplot(predictions_standard_errors, aes(x=se.fit.3)) + geom_histogram() + labs(title = "Moment 3")
 box4 <- ggplot(predictions_standard_errors, aes(x=se.fit.4)) + geom_histogram() + labs(title = "Moment 4")
 
-plot_grid(title_se, plot_grid(box1, box2, box3, box4), 
-                                   ncol = 1, 
-                                   rel_heights = c(0.1,1))
+plot_grid(title_se, 
+          plot_grid(box1, box2, box3, box4), 
+          ncol = 1, 
+          rel_heights = c(0.1,1))
 ```
 
 # Conclusion 
