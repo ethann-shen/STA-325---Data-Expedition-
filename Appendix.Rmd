@@ -124,12 +124,20 @@ lm.fit.log.1 <- lm(log_first_moment ~ St + log(Re) + log(Fr), data = train)
 summary(lm.fit.log.1)
 ```
 
+
+As we can see in the model above, the form of the linear model is:
+$$\hat {log(m_1)} =  14.999 + 0.25*St - 3.88*log(Re) + 0.011*log(Fr)$$.
+
+
 ## Model 2 
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.2 <- lm(log_second_moment ~ St + Re + Fr + Re*Fr, data=train)
 summary(lm.fit.2)
 ```
+
+As we can see in the model above, the form of the linear model is:
+$$\hat {log(m_2)} =  10.90 + 0.85*St - 0.049*Re -12.04*Fr + 0.038 *(Re\ x\ Fr)$$
 
 ## Model 3
 
@@ -139,6 +147,9 @@ summary(gam.fit.3)
 plot.gam(gam.fit.3, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
 ```
 
+As we can see in the model above, the form of the GAM model is:
+$$\hat {log(m_3)} =  23.85 -0.076*Re - 22.26435*Fr + 0.06586  *(Re\ x\ Fr) + s(log(St))$$
+
 ## Model 4
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
@@ -146,6 +157,9 @@ gam.fit.4 <- gam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train)
 summary(gam.fit.4)
 plot.gam(gam.fit.4, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
 ```
+
+As we can see in the model above, the form of the GAM model is:
+$$\hat {log(m_3)} =  35.14 -0.10245*Re -33.18109*Fr + 0.096 *(Re\ x\ Fr) + 5.42770*ns(log(St))$$
 
 # C.1 - Residuals of Moment 1 Models
 
