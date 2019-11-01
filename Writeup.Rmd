@@ -150,11 +150,11 @@ When deciding on a final model for each of the moments, we tested a handful of m
 
 For each of our final models, we also looked at the residual plots. These plots allowed us to observe linearity, constant variance, and normality of the residuals. In general, the distribution of residuals vs. the predictors and the QQ plot of the residuals seem decent. However, since there are limitations with our data, we have to be more lenient with these assumptions. 
 
-After creating various models for each moment, we made comparisons in both AIC and cross validation error between different classes of models. Our rationale for choosing 5 fold cross validation (as opposed to 10) was the small size of the training dataset, which contained only 89 observations. Below is a summary of the performances of each model we tested, for each of the four moments.
+After creating various models for each moment, we made comparisons in both AIC and cross validation error. Our rationale for choosing 5 fold cross validation (as opposed to 10) was the small size of the training dataset, which contained only 89 observations. Below is a summary of the performances of each model we tested, for each of the four moments.
 
 # Results 
 
-We displayed the final model output for each moment in the appendix (see section A).
+The final model output for each moment is displayed in the appendix (see section A).
 
 ## Moment 1
 
@@ -185,7 +185,8 @@ row.names(df.m2) <- c("Log Linear with interactions", "Polynomial (degree 2)", "
 df.m2
 ```
 
-We are using the linear model as our final model for moment 2. Although it does not have the lowest error values, it is more interpretable than a GAM. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B.2).
+We are using the linear model as our final model for moment 2. Although it does not have the lowest error values, it is more interpretable than a polynomial. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B.2).
+In this linear model we are including an interaction between `Re` and `Fr`. To make this interaction effect tangible, we will take our second moment as an example. Fixing `Re` at 90, a unit increase in `Fr` will produce a $\beta_3 + 90(\beta_4)$, or -8.75 decrease on $\log(y)$, or a 1.0001 factor increase on $y$ (where $y$ is our second moment).
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.2 <- lm(log_second_moment ~ St + Re + Fr + Re*Fr, data=train)
@@ -208,7 +209,7 @@ row.names(df.m3) <- c("Log Linear", "Polynomial (degree 2)","GAM (without intera
 df.m3
 ```
 
-We are using the GAM with interactions as our final model for moment 3. Even though the error is slightly lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B.3).
+We are using the GAM with interactions as our final model for moment 3. Even though the error is slightly lower for the polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B.3).
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.3 <- gam(log_third_moment~ s(log(St)) + Re + Fr + Re:Fr, data=train)
@@ -232,7 +233,7 @@ row.names(df.m4) <- c("Log Linear", "Polynomial (degree 2)","GAM (without intera
 df.m4
 ```
 
-We are using the GAM with interactions as our final model for moment 4. Even though the error is lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B.4).
+We are using the GAM with interactions as our final model for moment 4. Even though the error is lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables as we mentioned previously. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B.4).
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.4 <- gam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train)
@@ -274,7 +275,7 @@ write_csv(test, "predictions.csv")
 
 ## Measuring Uncertainty
 
-In discussing the performance of our model on the testing data, it is important to acknowledge the uncertainties of our predicted values for each model. Below we visualize the distribution of the standard error values of our predictions for each of our moments.
+In discussing the performance of our model on the testing data, it is important to acknowledge the uncertainties of our predicted values for each model. Below we visualize the distribution of the standard error values of our predictions for each of our moments. This will give us a visual understanding of the width of our confidence intervals for each prediction. 
 
 
 ```{r  warning = FALSE, message = FALSE, echo = FALSE}
@@ -299,15 +300,13 @@ plot_grid(title_se,
           rel_heights = c(0.1,1))
 ```
 
-As we can see, for our predictions of the first moment, our confidence intervals for the predictions of the first moment are relatively small (centering around 1),  highlighting a significant degree of certainty. As we shift focus to the uncertainty of prediction in the second moment, we see that the standard error of the fit is slightly larger, clustering at 1.5 and having its highest value of 2 (when St, Re, and Fr, take on values of  2, 90, and 1 respectively). Because this resulting confidence interval is going to be larger than other confidence intervals for this moment, the users of this model may be slightly more wary of the predicted value obtained. In terms of the third and fourth moments, we see that the standard error of fit hovers around even greater values- from 3.5 to 6. Here, we are even more uncertain of our predictions. Thus, for a user attempting to obtain predictions of the third and fourth raw moments from our models, it may be beneficial to seek out a more concrete estimate (or perhaps, even a direct value). 
+As we can see, for our predictions of the first moment, our standard errors for the predictions of the first moment are relatively small (centering around 1), highlighting a significant degree of certainty. As we shift focus to the uncertainty of prediction in the second moment, we see that the standard error of the fit is slightly larger, clustering at 1.5 and having its highest value of 2 (when St, Re, and Fr, take on values of  2, 90, and 1 respectively). Because this resulting confidence interval is going to be larger than other confidence intervals for this moment, the users of this model may be slightly more wary of the predicted value obtained. In terms of the third and fourth moments, we see that the standard error of fit hovers around even greater values- from 3.5 to 6. Here, we are even more uncertain of our predictions. Thus, for a user attempting to obtain predictions of the third and fourth raw moments from our models, it may be beneficial to seek out a more concrete estimate (or perhaps, even a direct value). 
 
 # Conclusion 
 
 In conclusion, we found that, for each of the moments barring the first, there was a tradeoff between prediction and interpretability. It was often the case that the final model we chose was not the one with the lowest cross validation error or AIC value. 
 
-Across all four moments, judging from the p-values, all three parameters are individually important. Comparatively, judging from the magnitude of the $\hat\beta$ estimates, `St` is consistently the most influential, followed by `Re` and `Fr.` 
-
-At higher moments, the interaction between `Re`:`Fr` becomes increasingly important. To make this interaction effect tangible, let's take the second moment as an example. Fixing `Re` at 90, a unit increase in `Fr` will produce a $\beta_3 + 90(\beta_4)$, or -8.75 decrease on $\log(y)$, or a 1.0001 factor increase on $y$. 
+Across all four moments, judging from the p-values, all three parameters are individually important. Comparatively, judging from the magnitude of the $\hat\beta$ estimates, `St` is consistently the most influential, followed by `Re` and `Fr.` Furthermore, at higher moments, the interaction between `Re`:`Fr` becomes increasingly important. 
 
 However, despite our success in finding a model that met both our goals, it is important to acknowledge that there were some inherent limitations in the training data we worked with. These are limitations that will certainly have implications on how our final model will perform on the testing data. For example, though there was a lack of continuous values for `Re` and `Fr` within the data, we sought to build a model that would theoretically predict the four raw moments for any continuous values of `Re` and `Fr.` If our training data itself had more continuity in these values, perhaps predictive performance would be better. Put simply, it is difficult to say much with few values.
 
