@@ -181,7 +181,7 @@ upper.1 <- fit.1 + (1.96 * se.fit.1)
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 df.m2 <- data.frame(CV.Error.Moment2 = c(4.71, 3.53, 5.75, 5.09), AIC.Moment2 = c(395, NA, 406, 390))
-row.names(df.m2) <- c("Log Linear", "Polynomial (degree 2)", "GAM (without interactions)", "GAM (with interaction)")
+row.names(df.m2) <- c("Log Linear with interactions", "Polynomial (degree 2)", "GAM (without interactions)", "GAM (with interaction)")
 df.m2
 ```
 
@@ -269,7 +269,6 @@ pred <- data.frame(fit.1 = fit.1,
                    upper.4 = upper.4)
 
 test <- cbind(test, pred)
-head(test)
 write_csv(test, "predictions.csv")
 ```
 
@@ -284,7 +283,7 @@ predictions_standard_errors <- predictions %>%
   select(se.fit.1, se.fit.2, se.fit.3, se.fit.4)
 ```
 
-```{r  warning = FALSE, message = FALSE, echo = FALSE}
+```{r fig.height = 3, fig.width = 6, warning = FALSE, message = FALSE, echo = FALSE}
 title_se <- ggdraw() + 
   draw_label("Distribution of Standard Errors") +
   theme(plot.margin = margin(0, 0, 0, 7))
@@ -301,7 +300,6 @@ plot_grid(title_se,
 ```
 
 As we can see, for our predictions of the first moment, our confidence intervals for the predictions of the first moment are relatively small (centering around 1),  highlighting a significant degree of certainty. As we shift focus to the uncertainty of prediction in the second moment, we see that the standard error of the fit is slightly larger, clustering at 1.5 and having its highest value of 2 (when St, Re, and Fr, take on values of  2, 90, and 1 respectively). Because this resulting confidence interval is going to be larger than other confidence intervals for this moment, the users of this model may be slightly more wary of the predicted value obtained. In terms of the third and fourth moments, we see that the standard error of fit hovers around even greater values- from 3.5 to 6. Here, we are even more uncertain of our predictions. Thus, for a user attempting to obtain predictions of the third and fourth raw moments from our models, it may be beneficial to seek out a more concrete estimate (or perhaps, even a direct value). 
-
 
 # Conclusion 
 
