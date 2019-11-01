@@ -192,6 +192,7 @@ summary(lm.fit.2)
 ```
 
 ```{r}
+AIC(lm.fit.2)
 cv.lm(train, form.lm = formula(log_second_moment ~ St + Re + Fr + Re*Fr), m = 5)
 ```
 
@@ -217,7 +218,7 @@ Next, we will try fititng a couple of different GAM models.
 gam.fit.2a <- gam(log_second_moment~ s(St) + Re + Fr, data=train)
 summary(gam.fit.2a)
 CVgam(log_second_moment~ s(St) + Re + Fr, data = train, nfold = 5, method = "GCV.Cp")
-
+AIC(gam.fit.2a)
 ```
 
 
@@ -225,12 +226,14 @@ CVgam(log_second_moment~ s(St) + Re + Fr, data = train, nfold = 5, method = "GCV
 gam.fit.2b <- gam(log_second_moment~ s(St) + Re + Fr + Re:Fr, data=train)
 summary(gam.fit.2b)
 CVgam(log_second_moment~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
-
+AIC(gam.fit.2b)
 ```
 
 
 ```{r}
 anova(gam.fit.2a, gam.fit.2b, test = "F")
+
+plot(gam.fit.2a)
 ```
 
 Thus, we will consider a GAM model with interactions. Now we wil test this against a natural spline. 
@@ -239,6 +242,7 @@ Thus, we will consider a GAM model with interactions. Now we wil test this again
 gam.fit.2c <- gam(log_second_moment~ ns(St) + Re + Fr + Re:Fr, data=train)
 summary(gam.fit.2c)
 CVgam(log_second_moment ~ ns(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
+AIC(gam.fit.2c)
 ```
 
 
@@ -254,9 +258,11 @@ We will also try fitting splines.
 ```{r}
 spline.fit.2a <- lm(log_second_moment ~ ns(log(St) + Re) + ns(Fr), data = train) 
 CVgam(log_second_moment ~ ns(log(St) + Re) + ns(Fr), data = train, nfold = 5, method = "GCV.Cp")
+AIC(spline.fit.2a)
 
 spline.fit.2b <- lm(log_second_moment ~ ns(St + Re) + bs(Fr), data = train) 
 CVgam(log_second_moment ~ ns(St + Re) + bs(Fr), data = train, nfold = 5, method = "GCV.Cp")
+AIC(spline.fit.2b)
 ```
 
 ```{r}
@@ -367,6 +373,23 @@ anova(gam.fit.3.1, gam.fit.3.2, test = "F")
 ```
 
 The anova is significant at an alpha level of 0.001, so we prefer the GAM model with interactions. The CV generated MSE scores also shows that it outforms the simple linear model. It underperforms the polynomial fit by a small margin, which seems to be a price worth paying if our main objective is interpretability. 
+
+$$
+log(y_1) = \beta_0 + \beta_1(St) + \beta_2(Re) + \beta_3(Fr)
+$$
+
+$$
+log(y_2) = \beta_0 + \beta_1(St) + \beta_2(Re) + \beta_3(Fr) + \beta_4(Re:Fr)
+$$
+
+$$
+log(y_3) = \beta_0 + f(St) + \beta_1(Re) + \beta_2(Fr) + \beta_3(Re:Fr), \mbox{where f is a spline}
+$$
+
+$$
+log(y_4) = \beta_0 + f(St) + \beta_1(Re) + \beta_2(Fr) + \beta_3(Re:Fr), \mbox{where f is a spline}
+$$
+
 
 ### Splines
 
@@ -513,3 +536,7 @@ anova(spline.4a, spline.4b, test = "F")
 ```{r}
 data.frame(exp(predict(gam.4c, data = test)))
 ```
+
+g(m)=b0 + b1x1 + b2x2 + f1(x3) + f2(x4,x5)
+
+
