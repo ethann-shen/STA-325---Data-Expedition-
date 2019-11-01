@@ -189,6 +189,7 @@ Next we will try fitting a simple linear regression model, taking into account t
 ```{r}
 lm.fit.2 <- lm(log_second_moment ~ St + Re + Fr + Re*Fr, data=train)
 summary(lm.fit.2)
+AIC(lm.fit.2)
 ```
 
 ```{r}
@@ -217,7 +218,7 @@ Next, we will try fititng a couple of different GAM models.
 gam.fit.2a <- gam(log_second_moment~ s(St) + Re + Fr, data=train)
 summary(gam.fit.2a)
 CVgam(log_second_moment~ s(St) + Re + Fr, data = train, nfold = 5, method = "GCV.Cp")
-
+AIC(gam.fit.2a)
 ```
 
 
@@ -225,7 +226,7 @@ CVgam(log_second_moment~ s(St) + Re + Fr, data = train, nfold = 5, method = "GCV
 gam.fit.2b <- gam(log_second_moment~ s(St) + Re + Fr + Re:Fr, data=train)
 summary(gam.fit.2b)
 CVgam(log_second_moment~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
-
+AIC(gam.fit.2b)
 ```
 
 
@@ -236,14 +237,14 @@ anova(gam.fit.2a, gam.fit.2b, test = "F")
 Thus, we will consider a GAM model with interactions. Now we wil test this against a natural spline. 
 
 ```{r}
-gam.fit.2c <- gam(log_second_moment~ ns(St) + Re + Fr + Re:Fr, data=train)
-summary(gam.fit.2c)
-CVgam(log_second_moment ~ ns(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
+# gam.fit.2c <- gam(log_second_moment~ ns(St) + Re + Fr + Re:Fr, data=train)
+# summary(gam.fit.2c)
+# CVgam(log_second_moment ~ ns(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
 ```
 
 
 ```{r}
-anova(gam.fit.2c, gam.fit.2b, test = "F")
+#anova(gam.fit.2c, gam.fit.2b, test = "F")
 ```
 
 We will work with the regular, rather than natural spline for St. 
@@ -257,6 +258,7 @@ CVgam(log_second_moment ~ ns(log(St) + Re) + ns(Fr), data = train, nfold = 5, me
 
 spline.fit.2b <- lm(log_second_moment ~ ns(St + Re) + bs(Fr), data = train) 
 CVgam(log_second_moment ~ ns(St + Re) + bs(Fr), data = train, nfold = 5, method = "GCV.Cp")
+
 ```
 
 ```{r}
@@ -361,7 +363,8 @@ GAM model with interactions
 gam.fit.3.2 <- gam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data=train)
 AIC(gam.fit.3.2)
 summary(gam.fit.3.2)
-gamclass::CVgam(log_third_moment ~ s(log(St)) + Re + Fr + Re * Fr, data = train, nfold = 5, method = "GCV.Cp")
+gamclass::CVgam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
+
 gam.fit.3.2 <- gam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data=train)
 summary(gam.fit.3.2)
 CVgam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
@@ -451,19 +454,38 @@ First, we will see if there are important interactions within the data.
 ### Linear Model (log transformations)
 
 ```{r}
-lm.fit.4 <- lm(log(R_moment_4) ~ St + Re + Fr + Re*Fr, data = train) 
+lm.fit.4 <- lm(log_fourth_moment ~ St + Re + Fr + Re*Fr, data = train) 
 summary(lm.fit.4)
-cv.lm(train, form.lm = formula(log(R_moment_4) ~ St + Re + Fr + Re*Fr), m = 5)
+AIC(lm.fit.4)
+cv.lm(train, form.lm = formula(log_fourth_moment ~ St + Re + Fr + Re*Fr), m = 5)
 ```
+
+### Polynomial 
+
+```{r}
+poly.4 <- cv.polywog(log_fourth_moment ~ St + Re + Fr,
+                  data = train,
+                  degrees.cv = 1:4,
+                  nfolds = 5,
+                  thresh = 1e-4)
+print(poly.4)
+
+## Extract best model and bootstrap
+poly.4 <- poly.4$polywog.fit
+poly.4 <- bootPolywog(poly.4, nboot = 5)
+summary(poly.4)
+```
+
 
 ### GAMs
 
 ```{r}
-gam.4a <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr), data = train)
+gam.4a <- gam(log_fourth_moment ~ ns(St) + Re + Fr, data = train)
 summary(gam.4a)
-gam.4b <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr)+ bs(Re * Fr), data = train)
-summary(gam.4b) 
-anova(gam.4a, gam.4b, test = "F")
+AIC(gam.4a)
+
+CVgam(log_fourth_moment ~ s(St) + Re + Fr, data = train, nfold = 5, method = "GCV.Cp")
+
 ```
 
 Adding the interaction helps. 
@@ -472,68 +494,38 @@ Testing is natural spline is btter than smoothing spline.
 
 ```{r}
 #GOOD MODEL 
-gam.4c <- gam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train)
-summary(gam.4c)
-anova(gam.4b, gam.4c, test = "F")
+gam.4b <- gam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train)
+summary(gam.4b)
+AIC(gam.4b)
 
+CVgam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
+```
 
-plot(gam.4c, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
-gam.4a <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr), data = train)
-summary(gam.4a)
-gam.4b <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr)+ bs(Re * Fr), data = train)
-summary(gam.4b) 
+```{r}
 anova(gam.4a, gam.4b, test = "F")
+
+plot(gam.4b, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
 ```
 Natural spline is better. 
 
-```{r}
-#gam.check(gam.4c)
-```
-
-```{r}
-CVgam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train, nfold = 5, method = "GCV.Cp")
-```
-
-Adding the interaction helps. 
-
-Testing is natural spline is btter than smoothing spline. 
-
-```{r}
-#GOOD MODEL 
-gam.4c <- gam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train)
-summary(gam.4c)
-anova(gam.4b, gam.4c, test = "F")
-
-
-plot(gam.4c, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
-```
-Natural spline is better. 
-
-```{r}
-#gam.check(gam.4c)
-```
-
-```{r}
-CVgam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train, nfold = 5, method = "GCV.Cp")
-```
 
 ### Splines
 
 ```{r}
-spline.4a <- lm(log(R_moment_4) ~ bs(St) + ns(Re) + ns(Fr), data = train) #.4697, AIC 4410.8
-spline.4b <- lm(log(R_moment_4) ~ bs(St) + ns(Re) + ns(Fr) + ns(Re*Fr), data = train) #.4607
-
-#BEST CV w intrpretable model lmfao
-gamclass::CVgam(log(R_moment_4) ~ bs(St) + ns(Re) + ns(Fr) + ns(Re*Fr), data = train, nfold = 5, method = "GCV.Cp")
-
-
+spline.4a <- lm(log_fourth_moment ~ bs(St) + ns(Re) + ns(Fr), data = train) #.4697, AIC 4410.8
+CVgam(log_fourth_moment ~ bs(St) + ns(Re) + ns(Fr), data = train, nfold = 5, method = "GCV.Cp")
 summary(spline.4a)
 AIC(spline.4a)
+
+spline.4b <- lm(log_fourth_moment ~ bs(St) + ns(Re) + ns(Fr) + ns(Re*Fr), data = train) #.4607
+CVgam(log_fourth_moment ~ bs(St) + ns(Re) + ns(Fr) + ns(Re*Fr), data = train, nfold = 5, method = "GCV.Cp")
 summary(spline.4b)
 AIC(spline.4b)
+
+
 anova(spline.4a, spline.4b, test = "F")
 ```
 
 ```{r}
-data.frame(exp(predict(gam.4c, data = test)))
+#data.frame(exp(predict(gam.4c, data = test)))
 ```
