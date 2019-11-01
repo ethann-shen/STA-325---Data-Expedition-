@@ -114,16 +114,13 @@ i1 <- ggplot(data=train, aes(x=Re,y=log_first_moment, color=as.factor(round(Fr, 
        color = "Fr")
 i2 <- ggplot(data=train, aes(x=Re,y=log_second_moment, color=as.factor(round(Fr, 3)))) + 
   geom_smooth() + 
-  labs(y = "log(Moment 2)",
-       color = "Fr")
+  labs(y = "log(Moment 2)")
 i3 <- ggplot(data=train, aes(x=Re,y=log_third_moment, color=as.factor(round(Fr, 3)))) + 
   geom_smooth() + 
-  labs(y = "log(Moment 3)",
-       color = "Fr")
+  labs(y = "log(Moment 3)")
 i4 <- ggplot(data=train, aes(x=Re,y=log_fourth_moment, color=as.factor(round(Fr, 3)))) + 
   geom_smooth() + 
-  labs(y = "log(Moment 4)",
-       color = "Fr")
+  labs(y = "log(Moment 4)")
 
 title_i <- ggdraw() + 
   draw_label("Interaction between Re and Fr") +
@@ -188,22 +185,29 @@ a <- train %>%
 
 a1 <- ggplot(data=a,mapping=aes(x=St, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. St")
 
 a2 <- ggplot(data=a,mapping=aes(x=Re, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. Re")
 
 a3 <- ggplot(data=a,mapping=aes(x=Fr, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. Fr")
 
 a4 <- ggplot(data=a,mapping=aes(sample=residuals)) + 
   stat_qq() + 
   stat_qq_line() +
   labs(title="Normal QQ Plot of Residuals")
 
-plot_grid(a1, a2, a3, a4)
+title_1 <- ggdraw() + 
+  draw_label("Moment 1") +
+  theme(plot.margin = margin(0, 0, 0, 7))
+
+m1.diag <- plot_grid(title_1, plot_grid(a1, a2, a3, a4), ncol = 1, rel_heights = c(0.1,1))
 ```
 
 ## Moment 2
@@ -233,22 +237,29 @@ b <- train %>%
 
 b1 <- ggplot(data=b,mapping=aes(x=St, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. St")
 
 b2 <- ggplot(data=b,mapping=aes(x=Re, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. Re")
 
 b3 <- ggplot(data=b,mapping=aes(x=Fr, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. Fr")
 
 b4 <- ggplot(data=b,mapping=aes(sample=residuals)) + 
   stat_qq() + 
   stat_qq_line() +
   labs(title="Normal QQ Plot of Residuals")
 
-plot_grid(b1, b2, b3, b4)
+title_2 <- ggdraw() + 
+  draw_label("Moment 2") +
+  theme(plot.margin = margin(0, 0, 0, 7))
+
+m2.diag <- plot_grid(title_2, plot_grid(b1, b2, b3, b4), ncol = 1, rel_heights = c(0.1,1))
 ```
 
 ## Moment 3
@@ -279,22 +290,29 @@ c <- train %>%
 
 c1 <- ggplot(data=c,mapping=aes(x=St, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. St")
 
 c2 <- ggplot(data=c,mapping=aes(x=Re, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. Re")
 
 c3 <- ggplot(data=c,mapping=aes(x=Fr, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. Fr")
 
 c4 <- ggplot(data=c,mapping=aes(sample=residuals)) + 
   stat_qq() + 
   stat_qq_line() +
   labs(title="Normal QQ Plot of Residuals")
 
-plot_grid(c1, c2, c3, c4)
+title_3 <- ggdraw() + 
+  draw_label("Moment 3") +
+  theme(plot.margin = margin(0, 0, 0, 7))
+
+m3.diag <- plot_grid(title_3, plot_grid(c1, c2, c3, c4), ncol = 1, rel_heights = c(0.1,1))
 ```
 
 
@@ -329,23 +347,31 @@ d <- train %>%
 
 d1 <- ggplot(data=d,mapping=aes(x=St, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. St")
 
 d2 <- ggplot(data=d,mapping=aes(x=Re, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. Re")
 
 d3 <- ggplot(data=d,mapping=aes(x=Fr, y=residuals)) + 
   geom_point() + 
-  geom_hline(yintercept=0,color="red")
+  geom_hline(yintercept=0,color="red") + 
+  labs(title = "Residuals vs. Fr")
 
 d4 <- ggplot(data=d,mapping=aes(sample=residuals)) + 
   stat_qq() + 
   stat_qq_line() +
   labs(title="Normal QQ Plot of Residuals")
 
-plot_grid(d1, d2, d3, d4)
+title_4 <- ggdraw() + 
+  draw_label("Moment 4") +
+  theme(plot.margin = margin(0, 0, 0, 7))
+
+m4.diag <- plot_grid(title_4, plot_grid(d1, d2, d3, d4), ncol = 1, rel_heights = c(0.1,1))
 ```
+
 
 ## Test Data Set 
 
@@ -378,3 +404,4 @@ write_csv(test, "predictions.csv")
 In conclusion, we found that, for each of the moments barring the first, there was a tradeoff between prediction and interpretability. It was often the case that the final model we chose was not the one with the lowest cross validation error or AIC value. 
 
 However, despite our success in finding a model that met both our goals, it is important to acknowledge that there were some inherent limitations in the training data we worked with. These are limitations that will certainly have implications on how our final model will perform on the testing data. For example, though there was a lack of continuous values for `Re` and `Fr` within the data, we sought to build a model that would theoretically predict the four raw moments for any continuous values of `Re` and `Fr.` If our training data itself had more continuity in these values, perhaps predictive performance would be better. Put simply, it is difficult to say much with few values.
+
