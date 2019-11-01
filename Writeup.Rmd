@@ -13,16 +13,19 @@ pkgTest <- function(x) {
     install.packages(x,dep=TRUE)
   }
 }
-pkgs <- c("tidyverse", "cowplot", "LaplacesDemon", "gam", "gamclass")
+pkgs <- c("tidyverse", "cowplot", "LaplacesDemon", "gam", "gamclass", "mgcv")
 for (pkg in pkgs) {
   pkgTest(pkg)
 }
 
 library(tidyverse)
 library(cowplot)
+library(grid)
+library(gridExtra)
 library(LaplacesDemon)
 library(gam)
 library(gamclass)
+library(mgcv)
 
 train <- read.csv("data-train.csv") 
 test <- read.csv("data-test.csv")
@@ -48,53 +51,58 @@ Our goal throughout this data expedition was two fold. From an inferential persp
 
 As mentioned in our introduction, in our attempt to model the probability distribution for particle cluster volumes, we decided on doing so through four separate models, one for each of the first four raw moments. However, prior to separating our models by moment as response variable, we wanted to explore general trends in our data that would inform any necessary transformations and/or interactions between the parameters. First, we knew that we needed to transform the Fr variable, as it contained infinity values. In order to do so, we used the inverse logit function ($\frac{e^x}{1+e^x}$), which transforms any real number $x$ into a value in the interval [0,1]. 
 
-Next, we visualized the distribution of the four moments as histograms to see if any transformations on our response variables were necessary.
+Next, we visualized the distribution of the four moments. From this, we noticed a severe right skew in the distributions of all four moments. To combat this, we decided to do a log transformation of each of the moments. We can see that it results in more “normal” looking distributions.
 
-```{r fig.height = 3, fig.width = 6, warning = FALSE, message = FALSE, echo = FALSE}
+```{r fig.height = 3, warning = FALSE, message = FALSE, echo = FALSE}
 m1 <- qplot(R_moment_1, data = train,
-            main = "Distribution of Moment 1", 
             xlab = "Moment 1", 
-            ylab = "Frequency")
+            )
 
 mlog1 <- qplot(log_first_moment, data = train,
-               main = "Distribution of log(Moment 1)", 
-               xlab = "log(Moment 1)", 
-               ylab = "Frequency")
+               xlab = "log(Moment 1)"
+               )
 m2 <- qplot(R_moment_2, data = train,
-            main = "Distribution of Moment 2", 
-            xlab = "Moment 2", 
-            ylab = "Frequency")
+            xlab = "Moment 2"
+            )
 
 mlog2 <- qplot(log_second_moment, data = train,
-               main = "Distribution of log(Moment 2)", 
-               xlab = "log(Moment 2)", 
-               ylab = "Frequency")
+               xlab = "log(Moment 2)"
+               )
 m3 <- qplot(R_moment_3, data = train,
-            main = "Distribution of Moment 3", 
-            xlab = "Moment 3", 
-            ylab = "Frequency")
+            xlab = "Moment 3"
+            )
 
 mlog3 <- qplot(log_third_moment, data = train,
-               main = "Distribution of log(Moment 3)", 
-               xlab = "log(Moment 3)", 
-               ylab = "Frequency")
+               xlab = "log(Moment 3)"
+               )
 m4 <- qplot(R_moment_4, data = train,
-            main = "Distribution of Moment 4", 
-            xlab = "Moment 4", 
-            ylab = "Frequency")
+            xlab = "Moment 4"
+            )
 
 mlog4 <- qplot(log_fourth_moment, data = train,
-               main = "Distribution of log(Moment 4)", 
-               xlab = "log(Moment 4)", 
-               ylab = "Frequency")
+               xlab = "log(Moment 4)"
+               )
 
-cowplot::plot_grid(m1,m2,m3,m4)
-```
+y.grob <- textGrob("Frequency",
+                   rot=90)
+title_raw <- ggdraw() + 
+  draw_label("Raw Moments") +
+  theme(plot.margin = margin(0, 0, 0, 7))
 
-From this, we noticed a severe right skew in the distributions of all four moments. To combat this, we decided to do a log transformation of each of the moments and use these logged moments as  our response variables in each of the models that we built. We can see that it results in more “normal” looking distributions.
+raw_moments <- plot_grid(m1,m2,m3,m4)
 
-```{r fig.height = 3, fig.width = 6, warning = FALSE, message = FALSE, echo = FALSE}
-cowplot::plot_grid(mlog1, mlog2, mlog3, mlog4)
+raw_plots <- plot_grid(title_raw, raw_moments, ncol = 1, rel_heights = c(0.1,1))
+
+
+title_log <- ggdraw() + 
+  draw_label("Logged Moments") +
+  theme(plot.margin = margin(0, 0, 0, 7))
+
+log_moments <- plot_grid(mlog1, mlog2, mlog3, mlog4)
+
+log_plots <- plot_grid(title_log, log_moments, ncol = 1,  rel_heights = c(0.1,1))
+
+grid.arrange(arrangeGrob(plot_grid(raw_plots, log_plots), left = y.grob))
 ```
 
 Next, we wanted to explore potential interactions that would be influential within our models. Below we visualize the interaction between `Re` and `Fr` as it pertains to each moment.
@@ -128,21 +136,22 @@ plot_i <- plot_grid(
   i4 + theme(legend.position = "none"),
   nrow = 2
 )
-
 legend <- get_legend(i1)
 
-with_title <- plot_grid(title_i, plot_i, ncol =1, rel_heights = c(0.1,1))
+with_title <- plot_grid(title_i, plot_i, ncol = 1, rel_heights = c(0.1,1))
 
 plot_grid(with_title, legend, rel_widths = c(3, 0.4))
 ```
 
 As we can see above, there seems to be a notable interactive effect between `Re` and `Fr` for the second, third, and fourth moments. This does not seem to be the case in the first, where varied values of `Fr` do not yield markedly different slopes on the plot. Thus, in the cases of the second, third, and fourth moments, we will consider this interaction as we build models.
 
-Something that is important to note is that, although our `Re` and `Fr` variables each take only one of three values, we are not treating them as categorical. If one of our goals is to be able to do prediction given any set of parameter values (perhaps `Re` and `Fr` values that are not strictly one of the three we see in the given training data), then it is important to consider these values as continuous. We will now delve in depth into our model selection process.  
+Something that is important to note is that, although our `Re` and `Fr` variables each take only one of three values, we are not treating them as categorical. If one of our goals is to be able to do prediction and extrapolate given any set of parameter values (perhaps `Re` and `Fr` values that are not strictly one of the three we see in the given training data), then it is important to consider these values as continuous. 
 
 ## Model Selection
 
-When deciding on a final model for each of the moments, we tested a handful of models with varying complexities and interpretabilities.  Specifically, for each moment, we tested various linear, polynomial, spline, and GAM models. We created models with and without interactions, and then conducted ANOVA tests to determine that models with interactions are generally better (except for the first moment). We avoided testing out more complex models, such as random forest, for the reason that it would provide a very limited scope from an inferential standpoint. 
+When deciding on a final model for each of the moments, we tested a handful of models with varying complexities and interpretabilities. One constant was we used the log transformed moments as our reponse variable for each of our final models. For each moment, we tested various linear, polynomial, and GAM models. We created models with and without interactions, and then conducted ANOVA tests to determine that models with interactions are generally better (except for the first moment). We avoided testing out more complex models, such as random forest, for the reason that it would provide a very limited scope from an inferential standpoint. 
+
+For each of our final models, we also looked at the residual plots. By looking at the resiudals, we wanted to look at linearity, constant variance, and normality of the residuals. In general, the distribution of residuals vs. the predictors and the QQ plot of the residuals seem decent. However, since there are limitations with our data, we have to be more lenient with these assumptions. 
 
 From here, we made comparisons in both AIC and cross validation error between different classes of models. Our rationale for choosing 5 fold cross validation (as opposed to 10) was the small size of the training dataset, which contained only 89 observations. Below is a summary of the performances of each model we tested, for each of the four moments.
 
@@ -161,12 +170,40 @@ We are using the linear model as our final model for moment 1. It has the lowest
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.1 <- lm(log_first_moment ~ St + Re + Fr, data = train)
 
+lm.fit.a <- lm(log_first_moment ~ St + log(Re) + log(Fr), data = train)
+
+
 fit.1 <- exp(predict(lm.fit.1, newdata = test, type = "response", se.fit = TRUE)$fit)
 
 se.fit.1 <- exp(predict(lm.fit.1, newdata = test, type = "response", se.fit = TRUE)$se.fit)
 
 lower.1 <- fit.1 - (1.96 * se.fit.1)
 upper.1 <- fit.1 + (1.96 * se.fit.1)
+```
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+lm.fit.a <- lm(log_first_moment ~ St + log(Re) + log(Fr), data = train)
+a <- train %>%
+  mutate(residuals = resid(lm.fit.a))
+
+a1 <- ggplot(data=a,mapping=aes(x=St, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+a2 <- ggplot(data=a,mapping=aes(x=Re, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+a3 <- ggplot(data=a,mapping=aes(x=Fr, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+a4 <- ggplot(data=a,mapping=aes(sample=residuals)) + 
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title="Normal QQ Plot of Residuals")
+
+plot_grid(a1, a2, a3, a4)
 ```
 
 ## Moment 2
@@ -177,19 +214,41 @@ row.names(df.m2) <- c("Log Linear", "Polynomial (degree 2)", "GAM (without inter
 df.m2
 ```
 
-We are using the GAM with interactions as our final model for moment 2. Even though the error is slightly lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. 
+We are using the linear model as our final model for moment 2. Although it does not have the lowest error values, it is more interpretable than a GAM. 
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-gam.fit.2 <- gam(log_second_moment~ s(St) + Re + Fr + Re:Fr, data=train)
+lm.fit.2 <- lm(log_second_moment ~ St + Re + Fr + Re*Fr, data=train)
 
-pred.2 <- predict(gam.fit.2, newdata = test, se.fit = TRUE)[[1]]
+pred.2 <- predict(lm.fit.2, newdata = test, se.fit = TRUE)[[1]]
 fit.2 <- exp(pred.2)
 
-se.2 <- predict(gam.fit.2, newdata = test, se.fit = TRUE)[[2]]
+se.2 <- predict(lm.fit.2, newdata = test, se.fit = TRUE)[[2]]
 se.fit.2 <- exp(se.2)
 
 lower.2 <- fit.2 - (1.96 * se.fit.2)
 upper.2 <- fit.2 + (1.96 * se.fit.2)
+
+b <- train %>%
+  mutate(residuals = resid(lm.fit.2))
+
+b1 <- ggplot(data=b,mapping=aes(x=St, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+b2 <- ggplot(data=b,mapping=aes(x=Re, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+b3 <- ggplot(data=b,mapping=aes(x=Fr, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+b4 <- ggplot(data=b,mapping=aes(sample=residuals)) + 
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title="Normal QQ Plot of Residuals")
+
+plot_grid(b1, b2, b3, b4)
 ```
 
 ## Moment 3
@@ -213,7 +272,32 @@ se.fit.3 <- exp(se.3)
 
 lower.3 <- fit.3 - (1.96 * se.fit.3)
 upper.3 <- fit.3 + (1.96 * se.fit.3)
+plot.gam(gam.fit.3, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
+
+c <- train %>%
+  mutate(residuals = resid(gam.fit.3))
+
+c1 <- ggplot(data=c,mapping=aes(x=St, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+c2 <- ggplot(data=c,mapping=aes(x=Re, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+c3 <- ggplot(data=c,mapping=aes(x=Fr, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+c4 <- ggplot(data=c,mapping=aes(sample=residuals)) + 
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title="Normal QQ Plot of Residuals")
+
+plot_grid(c1, c2, c3, c4)
 ```
+
+
 
 ## Moment 4
 
@@ -223,7 +307,7 @@ row.names(df.m4) <- c("Log Linear", "Polynomial (degree 2)","GAM (without intera
 df.m4
 ```
 
-We are using the GAM with interactions as our final model for moment 4. Even though the error is slightly lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. 
+We are using the GAM with interactions as our final model for moment 4. Even though the error is lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. 
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.4 <- gam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train)
@@ -236,6 +320,31 @@ se.fit.4 <- exp(se.4)
 
 lower.4 <- fit.4 - (1.96 * se.fit.4)
 upper.4 <- fit.4 + (1.96 * se.fit.4)
+plot.gam(gam.fit.4, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
+```
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
+d <- train %>%
+  mutate(residuals = resid(gam.fit.4))
+
+d1 <- ggplot(data=d,mapping=aes(x=St, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+d2 <- ggplot(data=d,mapping=aes(x=Re, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+d3 <- ggplot(data=d,mapping=aes(x=Fr, y=residuals)) + 
+  geom_point() + 
+  geom_hline(yintercept=0,color="red")
+
+d4 <- ggplot(data=d,mapping=aes(sample=residuals)) + 
+  stat_qq() + 
+  stat_qq_line() +
+  labs(title="Normal QQ Plot of Residuals")
+
+plot_grid(d1, d2, d3, d4)
 ```
 
 ## Test Data Set 
@@ -261,12 +370,11 @@ pred <- data.frame(fit.1 = fit.1,
 
 test <- cbind(test, pred)
 head(test)
-write_csv(test, "test.holdout.csv")
+write_csv(test, "predictions.csv")
 ```
 
 # Conclusion 
 
-In conclusion, we found that, for each of the moments, splines tended to have the best predictive performance. However, with the hopes of appealing to both our predictive and inferential objectives, the linear (for first moment) and GAM (for the second, third, and fourth moments) models were the most appropriate. 
+In conclusion, we found that, for each of the moments barring the first, there was a tradeoff between prediction and interpretability. It was often the case that the final model we chose was not the one with the lowest cross validation error or AIC value. 
 
-However, despite our success in finding a model that met both our goals, it is important to acknowledge that there were some inherent limitations in the training data we worked with. These are limitations that will certainly have implications on how our final model will perform on the testing data. For example, though there was a lack of continuous values for `Re` and `Fr` within the data, we sought to build a model that would theoretically predict the four raw moments for any continuous values of `Re` and `Fr`. If our training data itself had more continuity in these values, perhaps predictive performance would be better. Put simply, it is difficult to say much with few values.
-
+However, despite our success in finding a model that met both our goals, it is important to acknowledge that there were some inherent limitations in the training data we worked with. These are limitations that will certainly have implications on how our final model will perform on the testing data. For example, though there was a lack of continuous values for `Re` and `Fr` within the data, we sought to build a model that would theoretically predict the four raw moments for any continuous values of `Re` and `Fr.` If our training data itself had more continuity in these values, perhaps predictive performance would be better. Put simply, it is difficult to say much with few values.

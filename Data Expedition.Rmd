@@ -607,9 +607,9 @@ CVgam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train, nfold = 5, met
 ```
 
 ```{r}
-anova(gam.4a, gam.4b, test = "F")
+#anova(gam.4a, gam.4b, test = "F")
 
-plot(gam.4b, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
+#plot.gam(gam.4b)
 ```
 Natural spline is better. 
 
