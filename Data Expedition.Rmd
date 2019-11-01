@@ -348,7 +348,7 @@ Here, we explore a polynomial fit. Through bootstrapping, the polywog package se
 Base GAM model 
 
 ```{r}
-gam.fit.3.1 <- gam(log_third_moment~ s(St) + Re + Fr, data=train)
+gam.fit.3.1 <- gam(log_third_moment~ s(log(St)) + Re + Fr, data=train)
 gamclass::CVgam(log_third_moment ~ s(log(St)) + Re + Fr, data = train, nfold = 5, method = "GCV.Cp")
 AIC(gam.fit.3.1)
 summary(gam.fit.3.1)
@@ -357,15 +357,11 @@ summary(gam.fit.3.1)
 GAM model with interactions
 
 ```{r}
-gam.fit.3.2 <- gam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data=train)
+gam.fit.3.2 <- gam(log_third_moment~ s(log(St)) + Re + Fr + Re:Fr, data=train)
 AIC(gam.fit.3.2)
 summary(gam.fit.3.2)
-gamclass::CVgam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
+gamclass::CVgam(log_third_moment~ s(log(St)) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
 
-gam.fit.3.2 <- gam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data=train)
-summary(gam.fit.3.2)
-CVgam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
-gamclass::CVgam(log_third_moment ~ s(log(St)) + Re + Fr + Re * Fr, data = train, nfold = 5, method = "GCV.Cp")
 ```
 
 
