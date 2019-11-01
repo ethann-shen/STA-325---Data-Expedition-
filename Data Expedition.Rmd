@@ -198,7 +198,6 @@ summary(lm.fit.2)
 ```{r}
 cv.lm(trainSecondMomentFct, form.lm = formula(log_second_moment ~ St + Re + Fr + Re*Fr), m = 5)
 ```
-<<<<<<< HEAD
 
 ### Polynomial
 
@@ -287,7 +286,7 @@ lm.fit.2 <- lm(log(R_moment_2) ~ St + Re + Fr + Re*Fr, data=train)
 
 ```
 
-=======
+
 
 ### Polynomial
 
@@ -304,7 +303,6 @@ fit1 <- cv1$polywog.fit
 fit1 <- bootPolywog(fit1, nboot = 5)
 summary(fit1)
 ```
->>>>>>> ec5e309163842c7fa49118525ea2a377e86a3eb8
 
 ```{r}
 lm.predictions.2.log <- predict(lm.fit.2, data = test)
@@ -548,7 +546,6 @@ ggplot(data=train, aes(x=Re,y=log(R_moment_4), color=as.factor(Fr))) + geom_smoo
 lm.fit.4 <- lm(log(R_moment_4) ~ St + Re + Fr + Re*Fr, data = train) 
 summary(lm.fit.4)
 cv.lm(train, form.lm = formula(log(R_moment_4) ~ St + Re + Fr + Re*Fr), m = 5)
-<<<<<<< HEAD
 ```
 
 ### GAMs
@@ -559,8 +556,6 @@ summary(gam.4a)
 gam.4b <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr)+ bs(Re * Fr), data = train)
 summary(gam.4b) 
 anova(gam.4a, gam.4b, test = "F")
-=======
->>>>>>> ec5e309163842c7fa49118525ea2a377e86a3eb8
 ```
 
 Adding the interaction helps. 
@@ -568,7 +563,6 @@ Adding the interaction helps.
 Testing is natural spline is btter than smoothing spline. 
 
 ```{r}
-<<<<<<< HEAD
 #GOOD MODEL 
 gam.4c <- gam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train)
 summary(gam.4c)
@@ -576,17 +570,14 @@ anova(gam.4b, gam.4c, test = "F")
 
 
 plot(gam.4c, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
-=======
 gam.4a <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr), data = train)
 summary(gam.4a)
 gam.4b <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr)+ bs(Re * Fr), data = train)
 summary(gam.4b) 
 anova(gam.4a, gam.4b, test = "F")
->>>>>>> ec5e309163842c7fa49118525ea2a377e86a3eb8
 ```
 Natural spline is better. 
 
-<<<<<<< HEAD
 ```{r}
 #gam.check(gam.4c)
 ```
@@ -595,7 +586,6 @@ Natural spline is better.
 CVgam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train, nfold = 5, method = "GCV.Cp")
 ```
 
-=======
 Adding the interaction helps. 
 
 Testing is natural spline is btter than smoothing spline. 
@@ -619,7 +609,6 @@ Natural spline is better.
 CVgam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train, nfold = 5, method = "GCV.Cp")
 ```
 
->>>>>>> ec5e309163842c7fa49118525ea2a377e86a3eb8
 ### Splines
 
 ```{r}
@@ -640,8 +629,3 @@ anova(spline.4a, spline.4b, test = "F")
 ```{r}
 data.frame(exp(predict(gam.4c, data = test)))
 ```
-
-<<<<<<< HEAD
-=======
-
->>>>>>> ec5e309163842c7fa49118525ea2a377e86a3eb8
