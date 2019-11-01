@@ -2,7 +2,7 @@
 title: "STA 325 - Writeup"
 author: "Ethan Shen, Austin Jia, Malavi Ravindran, Steven Herrera"
 date: "10/26/2019"
-output:  rmdformats::readthedown
+output: pdf_document
 ---
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
@@ -151,14 +151,13 @@ From here, we made comparisons in both AIC and cross validation error between di
 ## Moment 1
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-df.m1 <- data.frame(CV.Error.Moment1 = c(0.368, 0.411, 0.397, 0.426, 0.407), AIC.Moment1 = c(167, 171, 169, 170, 168))
-row.names(df.m1) <- c("Log Linear", "GAM (without interactions)", "GAM (with interaction)", "Spline 1", "Spline 2")
+df.m1 <- data.frame(CV.Error.Moment1 = c(0.368, 0.426, 0.407), AIC.Moment1 = c(167, 170, 168))
+row.names(df.m1) <- c("Log Linear", "Spline 1", "Spline 2")
 df.m1
 ```
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.1 <- lm(log_first_moment ~ St + Re + Fr, data = train)
-summary(lm.fit.1)
 
 fit.1 <- exp(predict(lm.fit.1, newdata = test, type = "response", se.fit = TRUE)$fit)
 
@@ -171,21 +170,20 @@ upper.1 <- fit.1 + (1.96 * se.fit.1)
 ## Moment 2
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-df.m2 <- data.frame(CV.Error.Moment2 = c(4.71, 5.75, 5.09, 6.00, 4.07), AIC.Moment2 = c(395, 406, 390, 415, 380))
-row.names(df.m2) <- c("Log Linear", "GAM (without interactions)", "GAM (with interaction)", "Spline 1", "Spline 2")
+df.m2 <- data.frame(CV.Error.Moment2 = c(4.71, 6.00, 4.07), AIC.Moment2 = c(395, 415, 380))
+row.names(df.m2) <- c("Log Linear", "Spline 1", "Spline 2")
 df.m2
 ```
 
 We are using the GAM with interactions as our final model for moment 2. Even though the error is slightly lower for the second spline, a GAM is more interpretable than a spline. 
 
-```{r }
+```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.2 <- gam(log_second_moment~ s(St) + Re + Fr + Re:Fr, data=train)
-summary(gam.fit.2)
 
-pred.2 <- predict(gam.fit.2, newdata = test, se.fit = TRUE)$fit
+pred.2 <- predict(gam.fit.2, newdata = test, se.fit = TRUE)[[1]]
 fit.2 <- exp(pred.2)
 
-se.2 <- predict(gam.fit.2, newdata = test, se.fit = TRUE)$se.fit
+se.2 <- predict(gam.fit.2, newdata = test, se.fit = TRUE)[[2]]
 se.fit.2 <- exp(se.2)
 
 lower.2 <- fit.2 - (1.96 * se.fit.2)
@@ -195,19 +193,18 @@ upper.2 <- fit.2 + (1.96 * se.fit.2)
 ## Moment 3
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-df.m3 <- data.frame(CV.Error.Moment3 = c(15.7, 16.3, 13.3, 18.0, 11.0), AIC.Moment3 = c(498, 512, 497, 516, 474))
-row.names(df.m3) <- c("Log Linear", "GAM (without interactions)", "GAM (with interaction)", "Spline 1", "Spline 2")
+df.m3 <- data.frame(CV.Error.Moment3 = c(15.7, 18.0, 11.0), AIC.Moment3 = c(498,  516, 474))
+row.names(df.m3) <- c("Log Linear", "Spline 1", "Spline 2")
 df.m3
 ```
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.3 <- gam(log_third_moment~ s(log(St)) + Re + Fr + Re:Fr, data=train)
-summary(gam.fit.3)
 
-pred.3 <- predict(gam.fit.3, newdata = test, type = "response", se.fit = TRUE)$fit
+pred.3 <- predict(gam.fit.3, newdata = test, type = "response", se.fit = TRUE)[[1]]
 fit.3 <- exp(pred.3)
 
-se.3 <- predict(gam.fit.3, newdata = test, type = "response", se.fit = TRUE)$se.fit
+se.3 <- predict(gam.fit.3, newdata = test, type = "response", se.fit = TRUE)[[2]]
 se.fit.3 <- exp(se.3)
 
 lower.3 <- fit.3 - (1.96 * se.fit.3)
@@ -218,26 +215,25 @@ upper.3 <- fit.3 + (1.96 * se.fit.3)
 ## Moment 4
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-df.m4 <- data.frame(CV.Error.Moment4 = c(30.6, 38.8, 32.1, 37.8, 32.1), AIC.Moment4 = c(562, 578, 562, 578, 562))
-row.names(df.m4) <- c("Log Linear", "GAM (without interactions)", "GAM (with interaction)", "Spline 1", "Spline 2")
+df.m4 <- data.frame(CV.Error.Moment4 = c(30.6, 37.8, 32.1), AIC.Moment4 = c(562, 578, 562))
+row.names(df.m4) <- c("Log Linear",  "Spline 1", "Spline 2")
 df.m4
 ```
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.4 <- gam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train)
-summary(gam.fit.4)
 
-pred.4 <- predict(gam.fit.4, newdata = test, type = "response", se.fit = TRUE)$fit
+pred.4 <- predict(gam.fit.4, newdata = test, type = "response", se.fit = TRUE)[[1]]
 fit.4 <- exp(pred.4)
 
-se.4 <- predict(gam.fit.4, newdata = test, type = "response", se.fit = TRUE)$se.fit
+se.4 <- predict(gam.fit.4, newdata = test, type = "response", se.fit = TRUE)[[2]]
 se.fit.4 <- exp(se.4)
 
 lower.4 <- fit.4 - (1.96 * se.fit.4)
 upper.4 <- fit.4 + (1.96 * se.fit.4)
 ```
 
-```{r}
+```{r warning = FALSE, message = FALSE, echo = FALSE}
 pred <- data.frame(fit.1 = fit.1,
                    fit.2 = fit.2, 
                    fit.3 = fit.3, 
@@ -257,9 +253,13 @@ pred <- data.frame(fit.1 = fit.1,
 
 
 test <- cbind(test, pred)
+head(test)
 write_csv(test, "test.holdout.csv")
 ```
 
-
-
 # Conclusion 
+
+In conclusion, we found that, for each of the moments, splines tended to have the best predictive performance. However, with the hopes of appealing to both our predictive and inferential objectives, the linear (for first moment) and GAM (for the second, third, and fourth moments) models were the most appropriate. 
+
+However, despite our success in finding a model that met both our goals, it is important to acknowledge that there were some inherent limitations in the training data we worked with. These are limitations that will certainly have implications on how our final model will perform on the testing data. For example, though there was a lack of continuous values for `Re` and `Fr` within the data, we sought to build a model that would theoretically predict the four raw moments for any continuous values of `Re` and `Fr`. If our training data itself had more continuity in these values, perhaps predictive performance would be better. Put simply, it is difficult to say much with few values.
+
