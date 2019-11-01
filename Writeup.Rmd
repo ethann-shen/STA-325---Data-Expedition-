@@ -157,18 +157,15 @@ From here, we made comparisons in both AIC and cross validation error between di
 ## Moment 1
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-df.m1 <- data.frame(CV.Error.Moment1 = c(0.368, 0.411, 0.397), AIC.Moment1 = c(167, 171, 169))
-row.names(df.m1) <- c("Log Linear", "GAM (without interactions)", "GAM (with interaction)")
+df.m1 <- data.frame(CV.Error.Moment1 = c(0.0314, 0.411, 0.397), AIC.Moment1 = c(-54.6, 171, 169))
+row.names(df.m1) <- c("Log Linear with Log Predictors", "GAM (without interactions)", "GAM (with interaction)")
 df.m1
 ```
 
-We are using the linear model as our final model for moment 1. It has the lowest CV error and AIC. 
+We are using the linear model with a logged response and logged `Re` and `Fr` predictors as our final model for moment 1. It has the lowest CV error and AIC. We initially did not log transform the predictors, but the residual plots for the untransformed predictors egregiously violate the assumptions; the residual plots for the transformed predictors are slightly better (see appendix A). 
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-lm.fit.1 <- lm(log_first_moment ~ St + Re + Fr, data = train)
-
-lm.fit.a <- lm(log_first_moment ~ St + log(Re) + log(Fr), data = train)
-
+lm.fit.1 <- lm(log_first_moment ~ St + log(Re) + log(Fr), data = train)
 
 fit.1 <- exp(predict(lm.fit.1, newdata = test, type = "response", se.fit = TRUE)$fit)
 
@@ -176,38 +173,6 @@ se.fit.1 <- exp(predict(lm.fit.1, newdata = test, type = "response", se.fit = TR
 
 lower.1 <- fit.1 - (1.96 * se.fit.1)
 upper.1 <- fit.1 + (1.96 * se.fit.1)
-```
-
-```{r warning = FALSE, message = FALSE, echo = FALSE}
-lm.fit.a <- lm(log_first_moment ~ St + log(Re) + log(Fr), data = train)
-a <- train %>%
-  mutate(residuals = resid(lm.fit.a))
-
-a1 <- ggplot(data=a,mapping=aes(x=St, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. St")
-
-a2 <- ggplot(data=a,mapping=aes(x=Re, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. Re")
-
-a3 <- ggplot(data=a,mapping=aes(x=Fr, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. Fr")
-
-a4 <- ggplot(data=a,mapping=aes(sample=residuals)) + 
-  stat_qq() + 
-  stat_qq_line() +
-  labs(title="Normal QQ Plot of Residuals")
-
-title_1 <- ggdraw() + 
-  draw_label("Moment 1") +
-  theme(plot.margin = margin(0, 0, 0, 7))
-
-m1.diag <- plot_grid(title_1, plot_grid(a1, a2, a3, a4), ncol = 1, rel_heights = c(0.1,1))
 ```
 
 ## Moment 2
@@ -218,8 +183,8 @@ row.names(df.m2) <- c("Log Linear", "Polynomial (degree 2)", "GAM (without inter
 df.m2
 ```
 
-We are using the linear model as our final model for moment 2. Although it does not have the lowest error values, it is more interpretable than a GAM. 
-
+We are using the linear model as our final model for moment 2. Although it does not have the lowest error values, it is more interpretable than a GAM. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix B).
+ 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.2 <- lm(log_second_moment ~ St + Re + Fr + Re*Fr, data=train)
 
@@ -231,35 +196,6 @@ se.fit.2 <- exp(se.2)
 
 lower.2 <- fit.2 - (1.96 * se.fit.2)
 upper.2 <- fit.2 + (1.96 * se.fit.2)
-
-b <- train %>%
-  mutate(residuals = resid(lm.fit.2))
-
-b1 <- ggplot(data=b,mapping=aes(x=St, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. St")
-
-b2 <- ggplot(data=b,mapping=aes(x=Re, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. Re")
-
-b3 <- ggplot(data=b,mapping=aes(x=Fr, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. Fr")
-
-b4 <- ggplot(data=b,mapping=aes(sample=residuals)) + 
-  stat_qq() + 
-  stat_qq_line() +
-  labs(title="Normal QQ Plot of Residuals")
-
-title_2 <- ggdraw() + 
-  draw_label("Moment 2") +
-  theme(plot.margin = margin(0, 0, 0, 7))
-
-m2.diag <- plot_grid(title_2, plot_grid(b1, b2, b3, b4), ncol = 1, rel_heights = c(0.1,1))
 ```
 
 ## Moment 3
@@ -270,7 +206,7 @@ row.names(df.m3) <- c("Log Linear", "Polynomial (degree 2)","GAM (without intera
 df.m3
 ```
 
-We are using the GAM with interactions as our final model for moment 3. Even though the error is slightly lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. 
+We are using the GAM with interactions as our final model for moment 3. Even though the error is slightly lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix C).
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.3 <- gam(log_third_moment~ s(log(St)) + Re + Fr + Re:Fr, data=train)
@@ -284,38 +220,7 @@ se.fit.3 <- exp(se.3)
 lower.3 <- fit.3 - (1.96 * se.fit.3)
 upper.3 <- fit.3 + (1.96 * se.fit.3)
 plot.gam(gam.fit.3, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
-
-c <- train %>%
-  mutate(residuals = resid(gam.fit.3))
-
-c1 <- ggplot(data=c,mapping=aes(x=St, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. St")
-
-c2 <- ggplot(data=c,mapping=aes(x=Re, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. Re")
-
-c3 <- ggplot(data=c,mapping=aes(x=Fr, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. Fr")
-
-c4 <- ggplot(data=c,mapping=aes(sample=residuals)) + 
-  stat_qq() + 
-  stat_qq_line() +
-  labs(title="Normal QQ Plot of Residuals")
-
-title_3 <- ggdraw() + 
-  draw_label("Moment 3") +
-  theme(plot.margin = margin(0, 0, 0, 7))
-
-m3.diag <- plot_grid(title_3, plot_grid(c1, c2, c3, c4), ncol = 1, rel_heights = c(0.1,1))
 ```
-
-
 
 ## Moment 4
 
@@ -325,7 +230,7 @@ row.names(df.m4) <- c("Log Linear", "Polynomial (degree 2)","GAM (without intera
 df.m4
 ```
 
-We are using the GAM with interactions as our final model for moment 4. Even though the error is lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. 
+We are using the GAM with interactions as our final model for moment 4. Even though the error is lower for polynomial model, it is more interpretable, especially when we are trying to consider the impact of multiple variables. We considered log transforming `Re` and `Fr` like we did for moment 1, but the residual plots before and after transforming those predictors are noticeably different, so we kept the untransformed version of the predictors (see appendix D).
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.4 <- gam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train)
@@ -340,38 +245,6 @@ lower.4 <- fit.4 - (1.96 * se.fit.4)
 upper.4 <- fit.4 + (1.96 * se.fit.4)
 plot.gam(gam.fit.4, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
 ```
-
-```{r warning = FALSE, message = FALSE, echo = FALSE}
-d <- train %>%
-  mutate(residuals = resid(gam.fit.4))
-
-d1 <- ggplot(data=d,mapping=aes(x=St, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. St")
-
-d2 <- ggplot(data=d,mapping=aes(x=Re, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. Re")
-
-d3 <- ggplot(data=d,mapping=aes(x=Fr, y=residuals)) + 
-  geom_point() + 
-  geom_hline(yintercept=0,color="red") + 
-  labs(title = "Residuals vs. Fr")
-
-d4 <- ggplot(data=d,mapping=aes(sample=residuals)) + 
-  stat_qq() + 
-  stat_qq_line() +
-  labs(title="Normal QQ Plot of Residuals")
-
-title_4 <- ggdraw() + 
-  draw_label("Moment 4") +
-  theme(plot.margin = margin(0, 0, 0, 7))
-
-m4.diag <- plot_grid(title_4, plot_grid(d1, d2, d3, d4), ncol = 1, rel_heights = c(0.1,1))
-```
-
 
 ## Test Data Set 
 
@@ -397,6 +270,23 @@ pred <- data.frame(fit.1 = fit.1,
 test <- cbind(test, pred)
 head(test)
 write_csv(test, "predictions.csv")
+```
+
+```{r}
+predictions <- read.csv("predictions.csv")
+predictions_standard_errors <- predictions %>%
+  select(se.fit.1, se.fit.2, se.fit.3, se.fit.4)
+```
+
+```{r}
+title_se <- ggdraw() + 
+  draw_label("Distribution of Standard Errors") +
+  theme(plot.margin = margin(0, 0, 0, 7))
+box1 <- boxplot(predictions_standard_errors$se.fit.1, main="Distribution of Standard Errors: Moment 1", ylab="Standard Error")
+box2 <- boxplot(predictions_standard_errors$se.fit.2, main="Distribution of Standard Errors: Moment 2", ylab="Standard Error") 
+box3 <- boxplot(predictions_standard_errors$se.fit.3, main="Distribution of Standard Errors: Moment 3", ylab="Standard Error") 
+box4 <- boxplot(predictions_standard_errors$se.fit.4, main="Distribution of Standard Errors: Moment 4", ylab="Standard Error") 
+arrange(title_se, plot_grid(box1, box2, box3, box4), ncol = 1, rel_heights = c(0.1,1))
 ```
 
 # Conclusion 

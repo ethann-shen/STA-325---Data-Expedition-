@@ -210,6 +210,11 @@ We aren't sure about the effects of the interaction on our models, but we will r
 
 ```{r}
 cv.lm(train, form.lm = formula(log_first_moment ~ St + Re + Fr), m = 5, plotit=FALSE, seed = 123)
+
+lm.fit.a <- lm(log_first_moment ~ St + log(Re) + log(Fr), data = train)
+
+cv.lm(train, form.lm = formula(log_first_moment ~ St + log(Re) + log(Fr)), m = 5, plotit=FALSE, seed = 123)
+AIC(lm.fit.a)
 ```
 
 Our average MSE was 0.368, suggesting that the model may seem really good, but with not much understanding of what that looks like in comparison.
