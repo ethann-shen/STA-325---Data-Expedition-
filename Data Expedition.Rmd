@@ -12,7 +12,7 @@ pkgTest <- function(x) {
     install.packages(x,dep=TRUE)
   }
 }
-pkgs <- c("tidyverse", "cowplot", "LaplacesDemon", "gam", "splines", "mgcv", "polywog", "DAAG", "gbm", "adabag", "umap")
+pkgs <- c("tidyverse", "cowplot", "LaplacesDemon","gamclass", "gam", "splines", "mgcv", "polywog", "DAAG", "gbm", "adabag", "umap")
 for (pkg in pkgs) {
   pkgTest(pkg)
 }
@@ -22,6 +22,7 @@ for (pkg in pkgs) {
 library(tidyverse)
 library(cowplot)
 library(LaplacesDemon)
+library(gamclass)
 library(gam)
 library(splines)
 library(mgcv)
@@ -313,7 +314,7 @@ Initial data exploration in the introduction showcased a long right tail, sugges
 ```{r}
 lm.fit.3.2 <- lm(log_third_moment ~ St + Re + Fr + Re*Fr, data=train)
 summary(lm.fit.3.2)
-cv.lm(train.3.1, form.lm = formula(log_third_moment ~ St + Re + Fr + Re*Fr), m = 5)
+cv.lm(train, form.lm = formula(log_third_moment ~ St + Re + Fr + Re*Fr), m = 5)
 AIC(lm.fit.3.1)
 AIC(lm.fit.3.2)
 cv.lm(train, form.lm = formula(log_third_moment ~ St + Re + Fr + Re*Fr), m = 5)
@@ -332,8 +333,6 @@ cv3 <- cv.polywog(log_third_moment ~ St + Re + Fr,
 print(cv3)
 
 ## Extract best model and bootstrap
-fit1 <- cv1$polywog.fit
-fit1 <- bootPolywog(fit1, nboot = 5)
 fit3 <- cv3$polywog.fit
 fit3 <- bootPolywog(fit3, nboot = 5)
 summary(fit3)
@@ -347,8 +346,8 @@ Here, we explore a polynomial fit. Through bootstrapping, the polywog package se
 Base GAM model 
 
 ```{r}
-gam.fit.3.1 <- gam(log_third_moment~ s(St) + Re + Fr, data=train.3.1)
-gamclass::CVgam(log_third_moment ~ s(log(St)) + Re + Fr, data = train.3.1, nfold = 5, method = "GCV.Cp")
+gam.fit.3.1 <- gam(log_third_moment~ s(St) + Re + Fr, data=train)
+gamclass::CVgam(log_third_moment ~ s(log(St)) + Re + Fr, data = train, nfold = 5, method = "GCV.Cp")
 AIC(gam.fit.3.1)
 gam.fit.3.1 <- gam(log_third_moment~ s(St) + Re + Fr, data=train)
 summary(gam.fit.3.1)
@@ -359,10 +358,10 @@ CVgam(log_third_moment~ s(St) + Re + Fr, data = train, nfold = 5, method = "GCV.
 GAM model with interactions
 
 ```{r}
-gam.fit.3.2 <- gam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data=train.3.1)
+gam.fit.3.2 <- gam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data=train)
 AIC(gam.fit.3.2)
 summary(gam.fit.3.2)
-gamclass::CVgam(log_third_moment ~ s(log(St)) + Re + Fr + Re * Fr, data = train.3.1, nfold = 5, method = "GCV.Cp")
+gamclass::CVgam(log_third_moment ~ s(log(St)) + Re + Fr + Re * Fr, data = train, nfold = 5, method = "GCV.Cp")
 gam.fit.3.2 <- gam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data=train)
 summary(gam.fit.3.2)
 CVgam(log_third_moment~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
@@ -380,8 +379,8 @@ The anova is significant at an alpha level of 0.001, so we prefer the GAM model 
 We will also try fitting splines.
 
 ```{r}
-spline.fit.3a <- lm(log_third_moment ~ ns(log(St) + Re) + ns(Fr), data = train.3.1) 
-spline.fit.3b <- lm(log_third_moment ~ ns(St + Re) + bs(Fr), data = train.3.1) 
+spline.fit.3a <- lm(log_third_moment ~ ns(log(St) + Re) + ns(Fr), data = train) 
+spline.fit.3b <- lm(log_third_moment ~ ns(St + Re) + bs(Fr), data = train) 
 ```
 
 ```{r}
