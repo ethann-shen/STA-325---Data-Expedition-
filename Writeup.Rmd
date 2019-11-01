@@ -222,7 +222,6 @@ se.fit.3 <- exp(se.3)
 
 lower.3 <- fit.3 - (1.96 * se.fit.3)
 upper.3 <- fit.3 + (1.96 * se.fit.3)
-plot.gam(gam.fit.3, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
 ```
 
 ## Moment 4
@@ -246,7 +245,6 @@ se.fit.4 <- exp(se.4)
 
 lower.4 <- fit.4 - (1.96 * se.fit.4)
 upper.4 <- fit.4 + (1.96 * se.fit.4)
-plot.gam(gam.fit.4, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
 ```
 
 ## Test Data Set 

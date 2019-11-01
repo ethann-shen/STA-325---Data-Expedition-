@@ -41,19 +41,34 @@ test$Fr <- invlogit(test$Fr)
 
 # A - Model Output for Each Moment 
 
+## Model 1 
+
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.log.1 <- lm(log_first_moment ~ St + log(Re) + log(Fr), data = train)
-print("Model 1 Output")
 summary(lm.fit.log.1)
+```
+
+## Model 2 
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.2 <- lm(log_second_moment ~ St + Re + Fr + Re*Fr, data=train)
-print("Model 2 Output")
 summary(lm.fit.2)
+```
+
+## Model 3
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.3 <- gam(log_third_moment~ s(log(St)) + Re + Fr + Re:Fr, data=train)
-print("Model 3 Output")
 summary(gam.fit.3)
+plot.gam(gam.fit.3, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
+```
+
+## Model 4
+
+```{r warning = FALSE, message = FALSE, echo = FALSE}
 gam.fit.4 <- gam(log_fourth_moment ~ ns(St) + Re + Fr + Re:Fr, data = train)
-print("Model 4 Output")
 summary(gam.fit.4)
+plot.gam(gam.fit.4, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
 ```
 
 # B.1 - Residuals of Moment 1 Models
