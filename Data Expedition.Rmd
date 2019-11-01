@@ -149,28 +149,157 @@ plot_grid(with_title, legend, rel_widths = c(3, 0.4))
 ```
 
 
-# Moment 1 - Steven
+# Moment 1 - Steven# Moment 1 - Steven
 
-### General Framework
+## General Framework
 
 ### Linear Model (log transformations)
 
+To begin our analysis, we will conduct simple linear models and see how well it does in predicting our training response variable, which we will update to be **log(the first moment)**. We will also change our variable `Fr` into a **factor** variable.
 
-#### Using Ridge and LASSO regression 
+```{r}
+train <- train %>%
+  mutate(log_first_moment = log(R_moment_1))
 
-### Polynomial 
+train_with_factor_one <- train %>%
+  mutate(Fr = factor(Fr))
+
+just_re <- train_with_factor_one %>%
+  mutate(toget = Re,
+         type = "Re") %>%
+  select(toget, Fr, log_first_moment, type)
+
+just_st <- train_with_factor_one %>%
+  mutate(toget = St,
+         type = "St") %>%
+  select(toget, Fr, log_first_moment, type)
+
+full_plot_data <- rbind(just_re, just_st)
+```
+
+We then plot our variables using manipulation techniques.
+
+```{r warning=FALSE, message=FALSE, fig.width=8, fig.height=3}
+p1 <- ggplot(data = full_plot_data %>% filter(type == "Re"), mapping = aes(x = toget, y = log_first_moment, color = Fr)) +
+  geom_smooth() +
+  labs(title = "Re vs. Logged First Moment",
+       x = "Re",
+       y = "Logged First Moment") +
+  theme(plot.title = element_text(hjust = 0.5,size=14))
+
+p2 <- ggplot(data = full_plot_data %>% filter(type == "St"), mapping = aes(x = toget, y = log_first_moment, color = Fr)) +
+  geom_smooth() +
+  labs(title = "St vs. Logged First Moment",
+       x = "St", 
+       y = "Logged First Moment") +
+  theme(plot.title = element_text(hjust = 0.5,size=14))
+
+plot_grid(p1, p2, ncol = 2)
+```
+
+Seeing this visualization, we could justify there being unique interactions among `Fr` + `Re` and `Fr` and `St`. Let's put these variables and their interaction effects in a linear regression model.
+
+```{r}
+lm.fit.1 <- lm(log_first_moment ~ St + Re + Fr + Re*Fr + St*Fr, data = train)
+lm.fit.1.just.re <- lm(log_first_moment ~ St + Re + Fr + Re*Fr, data = train)
+lm.fit.1.no.interactions <- lm(log_first_moment ~ St + Re + Fr, data = train)
+anova(lm.fit.1, lm.fit.1.just.re, lm.fit.1.no.interactions)
+```
+
+We aren't sure about the effects of the interaction on our models, but we will remove it for now. We will consider using cross validation for further analysis. We will use five-folds since there isn't much training data to work with here.
+
+```{r}
+cv.lm(train, form.lm = formula(log_first_moment ~ St + Re + Fr), m = 5, plotit=FALSE, seed = 123)
+```
+
+Our average MSE was 0.368, suggesting that the model may seem really good, but with not much understanding of what that looks like in comparison.
 
 ### GAMs
 
+We fit a GAM model without interactions below. 
+
+```{r}
+gam.fit.1.1 <- gam(log_first_moment ~ s(St) + Re + Fr, data = train)
+summary(gam.fit.1.1)
+```
+
+We then build one with the interaction effects.
+
+```{r}
+gam.fit.1.2 <- gam(log_first_moment ~ s(St) + Re + Fr + Re:Fr, data = train)
+summary(gam.fit.1.2)
+```
+
+We conduct an ANOVA test below.
+
+```{r}
+anova(gam.fit.1.1, gam.fit.1.2, test = "F")
+```
+
+We see that the model without the interactions is better, in terms of not having a siginificant Anova F-Test Statistic.
+
+```{r}
+library(mgcv)
+gamclass::CVgam(log_first_moment ~ s(log(St)) + Re + Fr + Re * Fr, data = train, nfold = 5, method = "GCV.Cp", seed = 123)
+```
+
+Our average MSE was 0.397, suggesting that the model may seem really good, but not as good than our linear model.
+
 ### Splines
 
-### Random Forest
+
+```{r}
+spline.1a <- lm(log_first_moment ~ bs(St) + ns(Re) + ns(Fr), data = train)
+spline.1b <- lm(log_first_moment ~ bs(St) + ns(Re) + ns(Fr) + ns(Re*Fr), data = train)
+```
+
+```{r}
+summary(spline.1a)
+AIC(spline.1a)
+```
+
+```{r}
+summary(spline.1b)
+AIC(spline.1b)
+```
+
+```{r}
+anova(spline.1a, spline.1b, test = "F")
+```
+
+The spline model with interactions was better. We'll conduct the MSE below.
+
+```{r}
+CVgam(log_first_moment ~ bs(St) + ns(Re) + ns(Fr) + ns(Re*Fr), data = train, nfold = 5, method = "GCV.Cp", seed = 123)
+```
+
+Our average MSE was 0.407, suggesting that the model may seem really good, but not as good than our linear model.
+
+
 
 ### MSE Scores LATEX Table
 
 ### Flexibility vs. MSE Table
 
 ### Final Insights
+
+
+```{r}
+cv.lm(train, form.lm = formula(log_first_moment ~ St + Re + Fr), m = 5, plotit=FALSE, seed = 123)
+print("-----------------")
+cv.lm(train, form.lm = formula(log_first_moment ~ St + Re + Fr + Re*Fr), m = 5, plotit=FALSE, seed = 123)
+print("-----------------")
+gamclass::CVgam(log_first_moment ~ s(log(St)) + Re + Fr, data = train, nfold = 5, method = "GCV.Cp", seed = 123)
+print("-----------------")
+gamclass::CVgam(log_first_moment ~ s(log(St)) + Re + Fr + Re * Fr, data = train, nfold = 5, method = "GCV.Cp", seed = 123)
+print("-----------------")
+CVgam(log_first_moment ~ bs(St) + ns(Re) + ns(Fr), data = train, nfold = 5, method = "GCV.Cp", seed = 123)
+print("-----------------")
+CVgam(log_first_moment ~ bs(St) + ns(Re) + ns(Fr) + ns(Re*Fr), data = train, nfold = 5, method = "GCV.Cp", seed = 123)
+```
+
+
+
 
 
 
