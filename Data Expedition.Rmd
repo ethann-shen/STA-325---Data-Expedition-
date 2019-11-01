@@ -99,6 +99,44 @@ cowplot::plot_grid(mlog1, mlog2, mlog3, mlog4)
 ```
 
 
+```{r warning = FALSE, message = FALSE}
+i1 <- ggplot(data=train, aes(x=Re,y=log(R_moment_1), color=as.factor(round(Fr, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 1)",
+       color = "Fr")
+i2 <- ggplot(data=train, aes(x=Re,y=log(R_moment_2), color=as.factor(round(Fr, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 2)",
+       color = "Fr")
+i3 <- ggplot(data=train, aes(x=Re,y=log(R_moment_3), color=as.factor(round(Fr, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 3)",
+       color = "Fr")
+i4 <- ggplot(data=train, aes(x=Re,y=log(R_moment_4), color=as.factor(round(Fr, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 4)",
+       color = "Fr")
+
+title_i <- ggdraw() + 
+  draw_label("Interaction between Re and Fr") +
+  theme(plot.margin = margin(0, 0, 0, 7))
+
+plot_i <- plot_grid(
+  i1 + theme(legend.position = "none"),
+  i2 + theme(legend.position = "none"),
+  i3 + theme(legend.position = "none"),
+  i4 + theme(legend.position = "none"),
+  nrow = 2
+)
+
+legend <- get_legend(i1)
+
+with_title <- plot_grid(title_i, plot_i, ncol =1, rel_heights = c(0.1,1))
+
+plot_grid(with_title, legend, rel_widths = c(3, 0.4))
+```
+
+
 # Moment 1 - Steven
 
 ### General Framework
@@ -383,126 +421,73 @@ anova(spline.3.3, spline.4.3, test = "F")
 
 # Moment 4 - Ethan 
 
-### General Framework
 
+First, we will see if there are important interactions within the data. 
+
+```{r warning = FALSE, message = FALSE}
+ggplot(data=train, aes(x=Re,y=log(R_moment_4), color=as.factor(Fr))) + geom_smooth()
+
+```
 ### Linear Model (log transformations)
 
 ```{r}
-set.seed(123)
-data <- read.csv("data-train.csv")
-data$Fr <- invlogit(data$Fr)
-
-split <- sample(1:nrow(data), nrow(data) * 0.8) # 50% split
-train.data <- data[split, ]
-test.data <- data[-split,]
-```
-
-```{r}
-lm.fit.4 <- lm(R_moment_4 ~ St + Re + Fr, data = train.data) 
+lm.fit.4 <- lm(log(R_moment_4) ~ St + Re + Fr + Re*Fr, data = train) 
 summary(lm.fit.4)
-library(DAAG)
-cv.lm(train, form.lm = formula(R_moment_4 ~ St + Re + Fr), m = 5)
-```
-
-### Polynomial 
-
-```{r}
-unique(train$St)
-poly.fit.4 <- lm(R_moment_4 ~ poly(St,2) + poly(Re,2) + poly(Fr, 2), data = train) 
-summary(poly.fit.4)
-library(polywog)
-
-cv.polywog(R_moment_3 ~ St + Re + Fr,
-           data = train,
-           degrees.cv = 1:4,
-           nfolds = 5,
-           thresh = 1e-4)
+cv.lm(train, form.lm = formula(log(R_moment_4) ~ St + Re + Fr + Re*Fr), m = 5)
 ```
 
 ### GAMs
 
-
 ```{r}
-gam.1 <- gam(log(R_moment_4) ~ s(St) + Re + Fr, data = train)
-summary(gam.1)
-gam.2 <- gam(log(R_moment_4) ~ s(log(St)) + Re + Fr, data = train)
-summary(gam.2) 
+gam.4a <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr), data = train)
+summary(gam.4a)
+gam.4b <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr)+ bs(Re * Fr), data = train)
+summary(gam.4b) 
+anova(gam.4a, gam.4b, test = "F")
 ```
 
-Logging `St` definitely helps
+Adding the interaction helps. 
+
+Testing is natural spline is btter than smoothing spline. 
 
 ```{r}
 #GOOD MODEL 
-library(mgcv)
-gam.3 <- gam(log(R_moment_4) ~ s(log(St)) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train)
-summary(gam.3)
-AIC(gam.3)
-anova(gam.1, gam.2, gam.3, test = "F")
-plot(gam.3, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
+gam.4c <- gam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train)
+summary(gam.4c)
+anova(gam.4b, gam.4c, test = "F")
+
+
+plot(gam.4c, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
+```
+Natural spline is better. 
+
+```{r}
+#gam.check(gam.4c)
 ```
 
 ```{r}
-gam.check(gam.3)
+CVgam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train, nfold = 5, method = "GCV.Cp")
 ```
-
-```{r}
-library(gamclass)
-gamclass::CVgam(log(R_moment_4) ~ s(log(St)) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train, nfold = 5, method = "GCV.Cp")
-```
-
-
 
 ### Splines
 
 ```{r}
-spline.3 <- lm(log(R_moment_4) ~ ns(St) + ns(Re) + ns(Fr), data = train) #.4697, AIC 4410.8
-spline.4 <- lm(log(R_moment_4) ~ bs(St) + ns(Re) + ns(Fr), data = train) #.4607
+spline.4a <- lm(log(R_moment_4) ~ bs(St) + ns(Re) + ns(Fr), data = train) #.4697, AIC 4410.8
+spline.4b <- lm(log(R_moment_4) ~ bs(St) + ns(Re) + ns(Fr) + ns(Re*Fr), data = train) #.4607
 
 #BEST CV w intrpretable model lmfao
-gam.cv.4 <- gamclass::CVgam(log(R_moment_4) ~ bs(St) + ns(Re) + ns(Fr), data = train, nfold = 5, method = "GCV.Cp")
+gamclass::CVgam(log(R_moment_4) ~ bs(St) + ns(Re) + ns(Fr) + ns(Re*Fr), data = train, nfold = 5, method = "GCV.Cp")
 
 
-summary(spline.3)
-AIC(spline.3)
-summary(spline.4)
-AIC(spline.4)
-anova(spline.3, spline.4, test = "F")
-
-gamclass::CVgam(log(R_moment_4) ~ ns(St) + bs(Re) + ns(Fr), data = train, nfold = 5, method = "GCV.Cp")
-#BEST CV
-gamclass::CVgam(log(R_moment_4) ~ ns(St) + bs(Re) + ns(Fr), data = train, nfold = 5, method = "GCV.Cp")
-
-summary(lm(log(R_moment_4) ~ ns(St) + ns(Re + Fr), data = train))
-
+summary(spline.4a)
+AIC(spline.4a)
+summary(spline.4b)
+AIC(spline.4b)
+anova(spline.4a, spline.4b, test = "F")
 ```
-
-
-### Random Forest
 
 ```{r}
-# library(gbm)
-# set.seed(1)
-# bleh <- gbm(R_moment_4 ~ St + Fr + Re, data = train, 
-#             distribution = "gaussian", n.trees = 5000)
-# 
-# summary(bleh)
-# library(adabag)
-# library(gbm)
-# boosting.cv(R_moment_4 ~ St + Fr + Re, train, v = 10, boos = TRUE, mfinal = 100, 
-#             coeflearn = "Breiman", control, par=FALSE)
-# 
-# gbmCrossVal(cv.folds=10, train,  x, y,
-#             offset, distribution, w, var.monotone, n.trees, interaction.depth,
-#             n.minobsinnode, shrinkage, bag.fraction, var.names, response.name, group)
+data.frame(exp(predict(gam.4c, data = test)))
 ```
 
 
-### Cross Validation
-
-
-
-### MSE Scores LATEX Table
-
-### Flexibility vs. MSE Table
-
-### Final Insights
