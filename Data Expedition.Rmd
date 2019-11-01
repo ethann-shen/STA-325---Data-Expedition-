@@ -307,7 +307,7 @@ summary(lm.fit.3.1)
 cv.lm(train, form.lm = formula(R_moment_3 ~ St + Re + Fr + Re*Fr), m = 5)
 ```
 
-
+ 
 Initial data exploration in the introduction showcased a long right tail, suggesting that a long transformation on the response to be appropriate. This is a transformation that is inherent in the data, and will be carrying through all the models. The above plot which shows co-movement between Re and Fr suggests that an interaction between the two variables could be appropriate. Let's improve our baseline linear model with these enhancements.
 
 ```{r}
