@@ -49,7 +49,7 @@ Our goal throughout this data expedition was two fold. From an inferential persp
 
 ## EDA
 
-As mentioned in our introduction, in our attempt to model the probability distribution for particle cluster volumes, we decided on doing so through four separate models, one for each of the first four raw moments. However, prior to separating our models by moment as response variable, we wanted to explore general trends in our data that would inform any necessary transformations and/or interactions between the parameters. First, we knew that we needed to transform the Fr variable, as it contained infinity values. In order to do so, we used the inverse logit function ($\frac{e^x}{1+e^x}$), which transforms any real number $x$ into a value in the interval [0,1]. 
+As mentioned in our introduction, in our attempt to model the probability distribution for particle cluster volumes, we decided on creating four separate models, one for each of the first four raw moments. However, prior to separating our models by moment as response variable, we wanted to explore general trends in our data that would inform any necessary transformations and/or interactions between the parameters. First, we knew that we needed to transform the Fr variable, as it contained infinity values. In order to do so, we used the inverse logit function ($\frac{e^x}{1+e^x}$), which transforms any real number $x$ into a value in the interval [0,1]. 
 
 Next, we visualized the distribution of the four moments. From this, we noticed a severe right skew in the distributions of all four moments. To combat this, we decided to do a log transformation of each of the moments. We can see that it results in more “normal” looking distributions.
 
@@ -148,9 +148,9 @@ Something that is important to note is that, although our `Re` and `Fr` variable
 
 When deciding on a final model for each of the moments, we tested a handful of models with varying complexities and interpretabilities. One constant was we used the log transformed moments as our reponse variable for each of our final models. For each moment, we tested various linear, polynomial, and GAM models. We created models with and without interactions, and then conducted ANOVA tests to determine that models with interactions are generally better (except for the first moment). We avoided testing out more complex models, such as random forest, for the reason that it would provide a very limited scope from an inferential standpoint. 
 
-For each of our final models, we also looked at the residual plots. By looking at the resiudals, we wanted to look at linearity, constant variance, and normality of the residuals. In general, the distribution of residuals vs. the predictors and the QQ plot of the residuals seem decent. However, since there are limitations with our data, we have to be more lenient with these assumptions. 
+For each of our final models, we also looked at the residual plots. These plots allowed us to observe linearity, constant variance, and normality of the residuals. In general, the distribution of residuals vs. the predictors and the QQ plot of the residuals seem decent. However, since there are limitations with our data, we have to be more lenient with these assumptions. 
 
-From here, we made comparisons in both AIC and cross validation error between different classes of models. Our rationale for choosing 5 fold cross validation (as opposed to 10) was the small size of the training dataset, which contained only 89 observations. Below is a summary of the performances of each model we tested, for each of the four moments.
+After creating various models for each moment, we made comparisons in both AIC and cross validation error between different classes of models. Our rationale for choosing 5 fold cross validation (as opposed to 10) was the small size of the training dataset, which contained only 89 observations. Below is a summary of the performances of each model we tested, for each of the four moments.
 
 # Results 
 
