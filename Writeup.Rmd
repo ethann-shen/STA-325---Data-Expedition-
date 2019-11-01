@@ -150,11 +150,11 @@ When deciding on a final model for each of the moments, we tested a handful of m
 
 For each of our final models, we also looked at the residual plots. These plots allowed us to observe linearity, constant variance, and normality of the residuals. In general, the distribution of residuals vs. the predictors and the QQ plot of the residuals seem decent. However, since there are limitations with our data, we have to be more lenient with these assumptions. 
 
-After creating various models for each moment, we made comparisons in both AIC and cross validation error. Our rationale for choosing 5 fold cross validation (as opposed to 10) was the small size of the training dataset, which contained only 89 observations. Below is a summary of the performances of each model we tested, for each of the four moments.
+After creating various models for each moment, we made comparisons in both AIC and cross validation error. Our rationale for choosing 5 folds was the small size of the training dataset, which contained only 89 observations. Below is a summary of the performances of each model we tested, for each of the four moments.
 
 # Results 
 
-The final model output for each moment is displayed in the appendix (see section A).
+The final model output for each moment is displayed in the appendix, along with interpretation of predictors (see section A).
 
 ## Moment 1
 
