@@ -39,7 +39,83 @@ train$Fr <- invlogit(train$Fr)
 test$Fr <- invlogit(test$Fr)
 ```
 
-# A - Model Output for Each Moment 
+# A - Interaction Effects
+
+```{r warning = FALSE, message = FALSE}
+i1 <- ggplot(data=train, aes(x=St,y=log_first_moment, color=as.factor(round(Fr, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 1)",
+       color = "Fr")
+i2 <- ggplot(data=train, aes(x=St,y=log_second_moment, color=as.factor(round(Fr, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 2)",
+       color = "Fr")
+i3 <- ggplot(data=train, aes(x=St,y=log_third_moment, color=as.factor(round(Fr, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 3)",
+       color = "Fr")
+i4 <- ggplot(data=train, aes(x=St,y=log_fourth_moment, color=as.factor(round(Fr, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 4)",
+       color = "Fr")
+
+title_i <- ggdraw() + 
+  draw_label("Interaction between St and Fr") +
+  theme(plot.margin = margin(0, 0, 0, 7))
+
+plot_i <- plot_grid(
+  i1 + theme(legend.position = "none"),
+  i2 + theme(legend.position = "none"),
+  i3 + theme(legend.position = "none"),
+  i4 + theme(legend.position = "none"),
+  nrow = 2
+)
+
+legend <- get_legend(i1)
+
+with_title <- plot_grid(title_i, plot_i, ncol =1, rel_heights = c(0.1,1))
+
+plot_grid(with_title, legend, rel_widths = c(3, 0.4))
+```
+
+```{r warning = FALSE, message = FALSE}
+i1 <- ggplot(data=train, aes(x=St,y=log_first_moment, color=as.factor(round(Re, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 1)",
+       color = "Re")
+i2 <- ggplot(data=train, aes(x=St,y=log_second_moment, color=as.factor(round(Re, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 2)",
+       color = "Re")
+i3 <- ggplot(data=train, aes(x=St,y=log_third_moment, color=as.factor(round(Re, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 3)",
+       color = "Re")
+i4 <- ggplot(data=train, aes(x=St,y=log_fourth_moment, color=as.factor(round(Re, 3)))) + 
+  geom_smooth() + 
+  labs(y = "log(Moment 4)",
+       color = "Re")
+
+title_i <- ggdraw() + 
+  draw_label("Interaction between St and Re") +
+  theme(plot.margin = margin(0, 0, 0, 7))
+
+plot_i <- plot_grid(
+  i1 + theme(legend.position = "none"),
+  i2 + theme(legend.position = "none"),
+  i3 + theme(legend.position = "none"),
+  i4 + theme(legend.position = "none"),
+  nrow = 2
+)
+
+legend <- get_legend(i1)
+
+with_title <- plot_grid(title_i, plot_i, ncol =1, rel_heights = c(0.1,1))
+
+plot_grid(with_title, legend, rel_widths = c(3, 0.4))
+```
+
+# B - Model Output for Each Moment 
 
 ## Model 1 
 
@@ -71,7 +147,7 @@ summary(gam.fit.4)
 plot.gam(gam.fit.4, pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
 ```
 
-# B.1 - Residuals of Moment 1 Models
+# C.1 - Residuals of Moment 1 Models
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.1 <- lm(log_first_moment ~ St + Re + Fr, data = train)
@@ -106,7 +182,6 @@ title_1 <- ggdraw() +
 plot_grid(title_1, plot_grid(a1, a2, a3, a4), ncol = 1, rel_heights = c(0.1,1))
 ```
 
-
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 alog <- train %>%
   mutate(residuals = resid(lm.fit.log.1))
@@ -138,7 +213,7 @@ title_1.log <- ggdraw() +
 plot_grid(title_1.log, plot_grid(a1log, a2log, a3log, a4log), ncol = 1, rel_heights = c(0.1,1))
 ```
 
-# B.2 - Residuals of Moment 2 Models
+# C.2 - Residuals of Moment 2 Models
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 lm.fit.2 <- lm(log_second_moment ~ St + Re + Fr + Re*Fr, data=train)
@@ -206,7 +281,7 @@ title_2.log<- ggdraw() +
 plot_grid(title_2.log, plot_grid(b1.log, b2.log, b3.log, b4.log), ncol = 1, rel_heights = c(0.1,1))
 ```
 
-# B.3 - Residuals of Moment 3 Models
+# C.3 - Residuals of Moment 3 Models
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 c <- train %>%
@@ -272,7 +347,7 @@ title_3.log <- ggdraw() +
 plot_grid(title_3.log, plot_grid(c1, c2, c3, c4), ncol = 1, rel_heights = c(0.1,1))
 ```
 
-# B.4 - Residuals of Moment 4 Models
+# C.4 - Residuals of Moment 4 Models
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
 d <- train %>%
@@ -336,42 +411,4 @@ title_4.log <- ggdraw() +
   theme(plot.margin = margin(0, 0, 0, 7))
 
 plot_grid(title_4.log, plot_grid(d1, d2, d3, d4), ncol = 1, rel_heights = c(0.1,1))
-```
-
-
-```{r warning = FALSE, message = FALSE}
-i1 <- ggplot(data=train, aes(x=St,y=log_first_moment, color=as.factor(round(Fr, 3)))) + 
-  geom_smooth() + 
-  labs(y = "log(Moment 1)",
-       color = "Fr")
-i2 <- ggplot(data=train, aes(x=St,y=log_second_moment, color=as.factor(round(Fr, 3)))) + 
-  geom_smooth() + 
-  labs(y = "log(Moment 2)",
-       color = "Fr")
-i3 <- ggplot(data=train, aes(x=St,y=log_third_moment, color=as.factor(round(Fr, 3)))) + 
-  geom_smooth() + 
-  labs(y = "log(Moment 3)",
-       color = "Fr")
-i4 <- ggplot(data=train, aes(x=St,y=log_fourth_moment, color=as.factor(round(Fr, 3)))) + 
-  geom_smooth() + 
-  labs(y = "log(Moment 4)",
-       color = "Fr")
-
-title_i <- ggdraw() + 
-  draw_label("Interaction between St and Fr") +
-  theme(plot.margin = margin(0, 0, 0, 7))
-
-plot_i <- plot_grid(
-  i1 + theme(legend.position = "none"),
-  i2 + theme(legend.position = "none"),
-  i3 + theme(legend.position = "none"),
-  i4 + theme(legend.position = "none"),
-  nrow = 2
-)
-
-legend <- get_legend(i1)
-
-with_title <- plot_grid(title_i, plot_i, ncol =1, rel_heights = c(0.1,1))
-
-plot_grid(with_title, legend, rel_widths = c(3, 0.4))
 ```
