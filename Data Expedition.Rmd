@@ -198,6 +198,7 @@ summary(lm.fit.2)
 ```{r}
 cv.lm(trainSecondMomentFct, form.lm = formula(log_second_moment ~ St + Re + Fr + Re*Fr), m = 5)
 ```
+<<<<<<< HEAD
 
 ### Polynomial
 
@@ -216,6 +217,103 @@ summary(fit1)
 ```
 
 
+
+Next, we will try fititng a couple of different GAM models.
+
+```{r}
+gam.fit.2a <- gam(log_second_moment~ s(St) + Re + Fr, data=train)
+summary(gam.fit.2a)
+```
+
+
+```{r}
+gam.fit.2b <- gam(log_second_moment~ s(St) + Re + Fr + Re:Fr, data=train)
+summary(gam.fit.2b)
+```
+
+
+```{r}
+anova(gam.fit.2a, gam.fit.2b, test = "F")
+```
+
+Thus, we will consider a GAM model with interactions. Now we wil test this against a natural spline. 
+
+
+```{r}
+gam.fit.2c <- gam(log_second_moment~ ns(St) + Re + Fr + Re:Fr, data=train)
+summary(gam.fit.2c)
+```
+
+
+
+
+```{r}
+anova(gam.fit.2c, gam.fit.2b, test = "F")
+```
+
+We will work with the regular, rather than natural spline for St. 
+Finding the cv error of this model: 
+
+```{r}
+library(gamclass)
+gamclass::CVgam(log_second_moment ~ s(St) + Re + Fr + Re:Fr, data = train, nfold = 5, method = "GCV.Cp")
+```
+
+We will also try fitting splines.
+
+```{r}
+spline.fit.2a <- lm(log_second_moment ~ ns(log(St) + Re) + ns(Fr), data = train) 
+spline.fit.2b <- lm(log_second_moment ~ ns(St + Re) + bs(Fr), data = train) 
+```
+
+```{r}
+summary(spline.fit.2a)
+AIC(spline.fit.2a)
+```
+
+```{r}
+summary(spline.fit.2b)
+AIC(spline.fit.2b)
+```
+
+```{r}
+anova(spline.fit.2a, spline.fit.2b, test = "F")
+```
+
+Looks like the linear model performs slightly better than the GAM. We will use this as our final model to predict the second moment. 
+
+```{r}
+lm.fit.2 <- lm(log(R_moment_2) ~ St + Re + Fr + Re*Fr, data=train)
+
+```
+
+=======
+
+### Polynomial
+
+```{r}
+cv2 <- cv.polywog(log_second_moment ~ St + Re + Fr,
+                  data = trainSecondMomentFct,
+                  degrees.cv = 1:4,
+                  nfolds = 5,
+                  thresh = 1e-4)
+print(cv2)
+
+## Extract best model and bootstrap
+fit1 <- cv1$polywog.fit
+fit1 <- bootPolywog(fit1, nboot = 5)
+summary(fit1)
+```
+>>>>>>> ec5e309163842c7fa49118525ea2a377e86a3eb8
+
+```{r}
+lm.predictions.2.log <- predict(lm.fit.2, data = test)
+```
+
+```{r}
+lm.predictions.2 <- exp(lm.predictions.2.log)
+lm.predictions.2
+```
 
 Next, we will try fititng a couple of different GAM models.
 
@@ -450,6 +548,7 @@ ggplot(data=train, aes(x=Re,y=log(R_moment_4), color=as.factor(Fr))) + geom_smoo
 lm.fit.4 <- lm(log(R_moment_4) ~ St + Re + Fr + Re*Fr, data = train) 
 summary(lm.fit.4)
 cv.lm(train, form.lm = formula(log(R_moment_4) ~ St + Re + Fr + Re*Fr), m = 5)
+<<<<<<< HEAD
 ```
 
 ### GAMs
@@ -460,8 +559,43 @@ summary(gam.4a)
 gam.4b <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr)+ bs(Re * Fr), data = train)
 summary(gam.4b) 
 anova(gam.4a, gam.4b, test = "F")
+=======
+>>>>>>> ec5e309163842c7fa49118525ea2a377e86a3eb8
 ```
 
+Adding the interaction helps. 
+
+Testing is natural spline is btter than smoothing spline. 
+
+```{r}
+<<<<<<< HEAD
+#GOOD MODEL 
+gam.4c <- gam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train)
+summary(gam.4c)
+anova(gam.4b, gam.4c, test = "F")
+
+
+plot(gam.4c, pages=1, residuals=TRUE, all.terms=TRUE, shade=TRUE, shade.col=2)
+=======
+gam.4a <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr), data = train)
+summary(gam.4a)
+gam.4b <- gam(log(R_moment_4) ~ s(St) + bs(Re) + bs(Fr)+ bs(Re * Fr), data = train)
+summary(gam.4b) 
+anova(gam.4a, gam.4b, test = "F")
+>>>>>>> ec5e309163842c7fa49118525ea2a377e86a3eb8
+```
+Natural spline is better. 
+
+<<<<<<< HEAD
+```{r}
+#gam.check(gam.4c)
+```
+
+```{r}
+CVgam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train, nfold = 5, method = "GCV.Cp")
+```
+
+=======
 Adding the interaction helps. 
 
 Testing is natural spline is btter than smoothing spline. 
@@ -485,6 +619,7 @@ Natural spline is better.
 CVgam(log(R_moment_4) ~ ns(St) + bs(Re) + bs(Fr) + bs(Re * Fr), data = train, nfold = 5, method = "GCV.Cp")
 ```
 
+>>>>>>> ec5e309163842c7fa49118525ea2a377e86a3eb8
 ### Splines
 
 ```{r}
@@ -506,3 +641,7 @@ anova(spline.4a, spline.4b, test = "F")
 data.frame(exp(predict(gam.4c, data = test)))
 ```
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ec5e309163842c7fa49118525ea2a377e86a3eb8
