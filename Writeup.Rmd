@@ -403,9 +403,9 @@ write_csv(test, "predictions.csv")
 
 In conclusion, we found that, for each of the moments barring the first, there was a tradeoff between prediction and interpretability. It was often the case that the final model we chose was not the one with the lowest cross validation error or AIC value. 
 
-Across all four moments, St has a positive impact on the outcome prediction. Re and Fr have a negative impact on the outcome prediction. Judging from p-values, Re is consistently the most important predictor, and the interaction between these two parameters is important, especially for high moments. 
+Across all four moments, judging from the p-values, all three parameters are individually important. Comparatively, judging from the magnitude of the beta estimates, St is consistently the most influential, followed by Re and Fr. 
 
---INTERACTION INTERPRETATION HERE--
+At higher moments, the interaction between Re:Fr becomes increasingly important. To make this interaction effect tangible, let's take the second moment as an example. Fixing Re at 90, a unit increase in Fr will produce a $\beta_3 + 90(\beta_4)$, or -8.75 decrease on $\log(y)$, or a 1.0001 factor increase on $y$. 
 
 However, despite our success in finding a model that met both our goals, it is important to acknowledge that there were some inherent limitations in the training data we worked with. These are limitations that will certainly have implications on how our final model will perform on the testing data. For example, though there was a lack of continuous values for `Re` and `Fr` within the data, we sought to build a model that would theoretically predict the four raw moments for any continuous values of `Re` and `Fr.` If our training data itself had more continuity in these values, perhaps predictive performance would be better. Put simply, it is difficult to say much with few values.
 
